@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexTTrack — Song Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="/supabase.min.js"></script>
+<style>
+  :root{--black:#080808;--card:#141414;--border:rgba(255,255,255,0.07);--accent:#c8ff00;--accent2:#ff3cac;--gold:#ffd166;--text:#e8e8e8;--muted:#666;--input-bg:#1a1a1a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 16px 60px;overflow-x:hidden;}
+  body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(ellipse,rgba(200,255,0,0.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  body::after{content:'';position:fixed;bottom:-200px;left:30%;width:400px;height:400px;background:radial-gradient(ellipse,rgba(255,60,172,0.05) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  .container{width:100%;max-width:480px;position:relative;z-index:1;}
+
+  /* Loading */
+  .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;}
+  .loading-logo{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.35em;color:var(--accent);}
+  .loading-spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+
+  /* Error */
+  .error-screen{display:none;text-align:center;padding:80px 20px;}
+  .error-screen.visible{display:block;}
+  .error-icon{font-size:48px;margin-bottom:16px;display:block;}
+  .error-title{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#ff6b6b;margin-bottom:8px;}
+  .error-sub{font-size:14px;color:var(--muted);}
+
+  header{text-align:center;padding:52px 0 32px;animation:fadeDown 0.7s ease both;}
+  .app-name{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.35em;color:var(--accent);margin-bottom:12px;display:block;}
+  .app-name .t{color:rgba(200,255,0,0.4);}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,18vw,96px);line-height:0.9;letter-spacing:0.03em;color:#fff;text-shadow:0 0 60px rgba(200,255,0,0.12);}
+  .dj-by{font-size:11px;color:var(--muted);letter-spacing:0.2em;text-transform:uppercase;margin-top:10px;display:block;}
+  .dj-by span{color:rgba(200,255,0,0.6);}
+  .subtitle{font-size:13px;color:var(--muted);margin-top:8px;letter-spacing:0.04em;}
+  .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--border),var(--accent),var(--border),transparent);margin:8px 0 32px;animation:fadeIn 1s ease 0.3s both;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 24px;margin-bottom:16px;animation:fadeUp 0.6s ease both;}
+  .card:nth-child(2){animation-delay:0.1s;}.card:nth-child(3){animation-delay:0.2s;}.card:nth-child(4){animation-delay:0.3s;}
+  .card-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .card-title .num{width:22px;height:22px;border:1px solid var(--accent);border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-weight:500;}
+
+  label{display:block;font-size:11px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  input[type="text"],input[type="number"]{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;-webkit-appearance:none;}
+  input[type="text"]:focus,input[type="number"]:focus{border-color:rgba(200,255,0,0.4);box-shadow:0 0 0 3px rgba(200,255,0,0.06);}
+  input::placeholder{color:#3a3a3a;}
+
+  .tracks-grid{display:flex;flex-direction:column;gap:10px;}
+  .track-row{display:flex;align-items:center;gap:10px;}
+  .track-num{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#2a2a2a;width:20px;text-align:center;flex-shrink:0;transition:color 0.2s;}
+  .track-row:has(input:not(:placeholder-shown)) .track-num{color:var(--accent);}
+  .track-row input{flex:1;}
+  .optional-tag{font-size:10px;color:var(--muted);margin-left:6px;font-weight:300;letter-spacing:0.05em;text-transform:none;}
+
+  .tip-card{background:linear-gradient(135deg,#141414,#1a1014);border:1px solid rgba(255,60,172,0.15);position:relative;overflow:hidden;}
+  .tip-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;background:radial-gradient(circle,rgba(255,60,172,0.1),transparent 70%);pointer-events:none;}
+  .tip-card .card-title{color:var(--accent2);}
+  .tip-card .card-title .num{border-color:var(--accent2);}
+  .tip-intro{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+
+  .tip-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+  .tier-btn{background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:14px 8px;cursor:pointer;text-align:center;transition:all 0.2s;}
+  .tier-btn:hover{border-color:rgba(255,60,172,0.4);transform:translateY(-2px);}
+  .tier-btn.selected{border-color:var(--accent2);background:rgba(255,60,172,0.08);box-shadow:0 0 20px rgba(255,60,172,0.15);}
+  .tier-btn.selected.vip{border-color:var(--gold);background:rgba(255,209,102,0.08);box-shadow:0 0 20px rgba(255,209,102,0.2);}
+  .tier-amount{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.05em;color:#fff;display:block;margin-bottom:2px;}
+  .tier-label{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:8px;}
+  .tier-badge{display:inline-block;font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:20px;background:rgba(255,60,172,0.15);color:var(--accent2);border:1px solid rgba(255,60,172,0.2);}
+  .tier-btn.vip .tier-badge{background:rgba(255,209,102,0.15);color:var(--gold);border-color:rgba(255,209,102,0.3);}
+  .tier-btn.vip .tier-amount{color:var(--gold);}
+
+  .or-divider{display:flex;align-items:center;gap:10px;margin:16px 0;}
+  .or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+  .or-divider span{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:#333;}
+
+  .free-amount-wrap{margin-bottom:16px;}
+  .free-input-row{display:flex;align-items:center;}
+  .euro-prefix{background:#222;border:1px solid var(--border);border-right:none;border-radius:10px 0 0 10px;padding:14px 14px;font-size:16px;color:var(--muted);flex-shrink:0;}
+  .free-amount-wrap input{border-radius:0 10px 10px 0;border-left:none;-moz-appearance:textfield;}
+  .free-amount-wrap input::-webkit-inner-spin-button,.free-amount-wrap input::-webkit-outer-spin-button{-webkit-appearance:none;}
+
+  .priority-banner{display:none;align-items:center;gap:10px;background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+  .priority-banner.visible{display:flex;}
+  .priority-banner .icon{font-size:20px;flex-shrink:0;}
+  .priority-banner p{font-size:12px;color:var(--gold);line-height:1.5;}
+
+  .pay-section{display:none;flex-direction:column;gap:10px;}
+  .pay-section.visible{display:flex;}
+
+  .currency-label{font-size:11px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:block;}
+  .currency-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .currency-btn{background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .currency-btn:hover{border-color:rgba(255,255,255,0.15);}
+  .currency-btn.active-eur{border-color:#4a90e2;background:rgba(74,144,226,0.1);}
+  .currency-btn.active-chf{border-color:#e63946;background:rgba(230,57,70,0.1);}
+  .currency-flag{font-size:20px;display:block;margin-bottom:4px;}
+  .currency-name{font-size:13px;font-weight:500;color:var(--text);display:block;}
+  .currency-sub{font-size:10px;color:var(--muted);display:block;margin-top:2px;letter-spacing:0.05em;}
+  .currency-btn.active-eur .currency-name{color:#4a90e2;}
+  .currency-btn.active-chf .currency-name{color:#e63946;}
+
+  .pay-methods{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;}
+  .pay-method-badge{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#3a3a3a;background:#1a1a1a;border:1px solid #222;border-radius:6px;padding:3px 8px;}
+  .pay-method-badge.highlight{color:var(--accent);border-color:rgba(200,255,0,0.2);background:rgba(200,255,0,0.05);}
+
+  .pay-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;transition:all 0.2s;letter-spacing:0.02em;border:none;}
+  .pay-btn.normal{background:var(--accent2);color:#fff;box-shadow:0 0 20px rgba(255,60,172,0.25);}
+  .pay-btn.normal:hover{background:#ff5cbd;transform:translateY(-1px);}
+  .pay-btn.vip-pay{background:var(--gold);color:#000;box-shadow:0 0 20px rgba(255,209,102,0.25);}
+  .pay-btn.vip-pay:hover{transform:translateY(-1px);}
+
+  .paid-confirm{display:none;align-items:center;gap:10px;background:rgba(200,255,0,0.06);border:1px solid rgba(200,255,0,0.2);border-radius:10px;padding:12px 14px;}
+  .paid-confirm.visible{display:flex;}
+  .paid-confirm .icon{font-size:20px;flex-shrink:0;}
+  .paid-confirm p{font-size:12px;color:var(--accent);line-height:1.5;}
+
+  .no-tip-btn{background:none;border:none;width:100%;font-family:'DM Sans',sans-serif;font-size:12px;color:#3a3a3a;cursor:pointer;padding:6px;letter-spacing:0.05em;transition:color 0.2s;}
+  .no-tip-btn:hover{color:var(--muted);}
+
+  .tip-warning{display:none;align-items:center;gap:10px;background:rgba(255,107,107,0.07);border:1px solid rgba(255,107,107,0.25);border-radius:10px;padding:12px 14px;margin-top:8px;animation:shake 0.4s ease both;}
+  .tip-warning.visible{display:flex;}
+  .tip-warning .icon{font-size:18px;flex-shrink:0;}
+  .tip-warning p{font-size:12px;color:#ff6b6b;line-height:1.5;}
+
+  .submit-btn{width:100%;padding:18px;background:var(--accent);border:none;border-radius:12px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.15em;cursor:pointer;transition:transform 0.15s,box-shadow 0.2s;box-shadow:0 0 30px rgba(200,255,0,0.2);animation:fadeUp 0.6s ease 0.4s both;margin-top:4px;}
+  .submit-btn.priority-mode{background:var(--gold);box-shadow:0 0 30px rgba(255,209,102,0.3);}
+  .submit-btn:hover{transform:translateY(-2px);}
+  .submit-btn:active{transform:scale(0.98);}
+  .submit-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  .error-msg{color:#ff6b6b;font-size:12px;margin-top:6px;display:none;}
+  .error-msg.visible{display:block;}
+
+  .success-screen{display:none;text-align:center;padding:60px 20px;animation:fadeUp 0.5s ease both;}
+  .success-screen.visible{display:block;}
+  .success-icon{font-size:56px;margin-bottom:20px;display:block;animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;}
+  .success-title{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--accent);margin-bottom:12px;}
+  .success-title.vip{color:var(--gold);}
+  .success-sub{font-size:14px;color:var(--muted);line-height:1.6;}
+
+  footer{text-align:center;margin-top:40px;font-size:11px;color:#2a2a2a;letter-spacing:0.15em;}
+  footer .ft-name{color:rgba(200,255,0,0.2);}
+
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:8px;}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="loading-logo">NexTTrack</div>
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- Error -->
+<div class="container">
+  <div class="error-screen" id="errorScreen">
+    <span class="error-icon">🎛️</span>
+    <div class="error-title">DJ introuvable</div>
+    <p class="error-sub">Ce lien ne correspond à aucun DJ.<br>Vérifie le QR code et réessaie.</p>
+  </div>
+
+  <!-- FORM (caché jusqu'au chargement) -->
+  <div id="mainContent" style="display:none;">
+    <header>
+      <span class="app-name">NexT<span class="t">Track</span></span>
+      <h1 id="djName">MIKE<br>DEEM</h1>
+      <span class="dj-by">Song Request · <span>En live</span></span>
+      <p class="subtitle">Pose ta demande — je la vois entre deux tracks</p>
+    </header>
+
+    <div class="divider"></div>
+
+    <div id="formWrapper">
+
+      <div class="card">
+        <div class="card-title"><span class="num">1</span> Ton prénom</div>
+        <label for="name">Prénom</label>
+        <input type="text" id="name" placeholder="Ex : Sarah" autocomplete="off" />
+        <div class="error-msg" id="nameError">Dis-moi ton prénom ✌️</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="num">2</span> Tes idées de sons</div>
+        <label>Jusqu'à 5 titres <span class="optional-tag">(artiste — titre si possible)</span></label>
+        <div class="tracks-grid">
+          <div class="track-row"><span class="track-num">1</span><input type="text" id="t1" placeholder="Ex : Drake — God's Plan" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">2</span><input type="text" id="t2" placeholder="Ex : Beyoncé — Cuff It" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">3</span><input type="text" id="t3" placeholder="Optionnel" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">4</span><input type="text" id="t4" placeholder="Optionnel" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">5</span><input type="text" id="t5" placeholder="Optionnel" autocomplete="off" /></div>
+        </div>
+        <div class="error-msg" id="tracksError">Mets au moins un titre 🎵</div>
+      </div>
+
+      <div class="card tip-card">
+        <div class="card-title"><span class="num">3</span> Laisser un tip <span class="optional-tag" style="color:#555;font-size:11px;">— optionnel</span></div>
+        <p class="tip-intro">Tu kiffes la set ? Un tip ça fait plaisir — et ça peut accélérer le passage de ta demande 👀</p>
+
+        <div class="tip-tiers">
+          <div class="tier-btn" data-amount="5" onclick="selectTier(this)">
+            <span class="tier-amount">5€/CHF</span>
+            <span class="tier-label">Sympa</span>
+            <span class="tier-badge">Quand je peux</span>
+          </div>
+          <div class="tier-btn" data-amount="10" onclick="selectTier(this)">
+            <span class="tier-amount">10€/CHF</span>
+            <span class="tier-label">Généreux</span>
+            <span class="tier-badge">Ça arrive vite</span>
+          </div>
+          <div class="tier-btn vip" data-amount="20" onclick="selectTier(this)">
+            <span class="tier-amount">20€/CHF+</span>
+            <span class="tier-label">VIP</span>
+            <span class="tier-badge">⚡ Priorité</span>
+          </div>
+        </div>
+
+        <div class="or-divider"><span>ou montant libre</span></div>
+        <div class="free-amount-wrap">
+          <div class="free-input-row">
+            <span class="euro-prefix">€/CHF</span>
+            <input type="number" id="freeAmount" placeholder="Ex : 15" min="1" max="500" oninput="onFreeAmount()" />
+          </div>
+        </div>
+
+        <div class="priority-banner" id="priorityBanner">
+          <span class="icon">⚡</span>
+          <p><strong>Priorité activée.</strong> Ta demande remonte en tête de liste.</p>
+        </div>
+
+        <div class="pay-section" id="paySection">
+          <span class="currency-label">Choisir ta devise</span>
+          <div class="currency-toggle">
+            <button class="currency-btn" id="btnEUR" onclick="selectCurrency('EUR')">
+              <span class="currency-flag">🇪🇺</span>
+              <span class="currency-name">Euro</span>
+              <span class="currency-sub">Carte · Apple Pay · PayPal</span>
+            </button>
+            <button class="currency-btn" id="btnCHF" onclick="selectCurrency('CHF')">
+              <span class="currency-flag">🇨🇭</span>
+              <span class="currency-name">Franc suisse</span>
+              <span class="currency-sub">Twint · Carte · Apple Pay</span>
+            </button>
+          </div>
+          <div id="payBtnWrap" style="display:none;flex-direction:column;gap:10px;">
+            <a href="#" target="_blank" id="payBtn" class="pay-btn normal" onclick="handlePayClick(event)">
+              <span id="payBtnLabel">💳 Payer</span>
+            </a>
+            <div class="pay-methods" id="payMethods"></div>
+            <button class="no-tip-btn" onclick="clearTip()">Finalement, sans tip →</button>
+          </div>
+        </div>
+
+        <div class="paid-confirm" id="paidConfirm">
+          <span class="icon">✅</span>
+          <p><strong>Tip envoyé, merci !</strong> Tu peux maintenant envoyer ta demande.</p>
+        </div>
+      </div>
+
+      <div class="tip-warning" id="tipWarning">
+        <span class="icon">⚠️</span>
+        <p>T'as sélectionné un tip mais tu n'as pas encore payé. Paie d'abord ou clique sur <strong>"Finalement, sans tip"</strong> pour continuer.</p>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">ENVOYER MA DEMANDE</button>
+    </div>
+
+    <div class="success-screen" id="successScreen">
+      <span class="success-icon">🎛️</span>
+      <div class="success-title" id="successTitle">C'est reçu !</div>
+      <p class="success-sub" id="successSub"></p>
+    </div>
+
+    <footer><span class="ft-name">NexTTrack</span> · SONG REQUEST SYSTEM</footer>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://auotqmoflcjigqetxcfm.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1b3RxbW9mbGNqaWdxZXR4Y2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjUzMjEsImV4cCI6MjA5NzM0MTMyMX0.tYk78GudMkntmDTq6tv_AqiMCyXYOoBp9XyA7i-2ZCQ';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const PRIORITY_THRESHOLD = 20;
+  const STRIPE_LINKS = {
+    EUR: { 5: "https://buy.stripe.com/5kQ00iavlgCualn1nFdEs00", 10: "https://buy.stripe.com/28E00i8ndcmefFHfevdEs01", 20: "https://buy.stripe.com/28EfZg8nddqidxzaYfdEs02" },
+    CHF: { 5: "https://buy.stripe.com/4gMeVcdHxae69hjc2jdEs03", 10: "https://buy.stripe.com/dRm4gy5b10Dwalnd6ndEs04", 20: "https://buy.stripe.com/6oUbJ046X1HA3WZ2rJdEs05" },
+  };
+
+  let djProfile = null;
+  let selectedAmount = 0;
+  let selectedCurrency = null;
+  let tipPaid = false;
+
+  // ── INIT : charge le profil DJ depuis l'URL ──
+  async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('dj');
+
+    if (!slug) {
+      // Pas de slug → affiche Mike Deem par défaut (pour les tests)
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      return;
+    }
+
+    const { data, error } = await sb.from('djs').select('*').eq('slug', slug).single();
+
+    document.getElementById('loadingScreen').style.display = 'none';
+
+    if (error || !data) {
+      document.getElementById('errorScreen').classList.add('visible');
+      return;
+    }
+
+    djProfile = data;
+
+    // Personnalise la page avec le nom du DJ
+    const nameParts = data.name.toUpperCase().split(' ');
+    if (nameParts.length >= 2) {
+      document.getElementById('djName').innerHTML = nameParts.slice(0, -1).join(' ') + '<br>' + nameParts[nameParts.length - 1];
+    } else {
+      document.getElementById('djName').textContent = data.name.toUpperCase();
+    }
+
+    // Applique les couleurs du DJ si personnalisées
+    if (data.color_accent) document.documentElement.style.setProperty('--accent', data.color_accent);
+    if (data.color_accent2) document.documentElement.style.setProperty('--accent2', data.color_accent2);
+
+    document.title = `NexTTrack — ${data.name}`;
+    document.getElementById('mainContent').style.display = 'block';
+  }
+
+  function getStripeLink(amount, currency) {
+    const links = STRIPE_LINKS[currency];
+    if (amount <= 5) return links[5];
+    if (amount <= 10) return links[10];
+    return links[20];
+  }
+
+  function selectTier(el) {
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('freeAmount').value = '';
+    el.classList.add('selected');
+    selectedAmount = parseInt(el.dataset.amount);
+    tipPaid = false;
+    document.getElementById('paidConfirm').classList.remove('visible');
+    document.getElementById('tipWarning').classList.remove('visible');
+    updateTipUI();
+  }
+
+  function onFreeAmount() {
+    const val = parseInt(document.getElementById('freeAmount').value);
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('selected'));
+    selectedAmount = isNaN(val) || val < 1 ? 0 : val;
+    tipPaid = false;
+    document.getElementById('paidConfirm').classList.remove('visible');
+    document.getElementById('tipWarning').classList.remove('visible');
+    updateTipUI();
+  }
+
+  function selectCurrency(currency) {
+    selectedCurrency = currency;
+    document.getElementById('btnEUR').className = 'currency-btn' + (currency === 'EUR' ? ' active-eur' : '');
+    document.getElementById('btnCHF').className = 'currency-btn' + (currency === 'CHF' ? ' active-chf' : '');
+    const isVip = selectedAmount >= PRIORITY_THRESHOLD;
+    const wrap = document.getElementById('payBtnWrap');
+    const payBtn = document.getElementById('payBtn');
+    const payBtnLabel = document.getElementById('payBtnLabel');
+    const payMethods = document.getElementById('payMethods');
+    wrap.style.display = 'flex';
+    payBtn.href = getStripeLink(selectedAmount, currency);
+    payBtn.className = 'pay-btn ' + (isVip ? 'vip-pay' : 'normal');
+    const symbol = currency === 'EUR' ? '€' : ' CHF';
+    payBtnLabel.textContent = isVip ? `⚡ Payer ${selectedAmount}${symbol} — Priorité` : `💳 Payer ${selectedAmount}${symbol}`;
+    payMethods.innerHTML = currency === 'CHF'
+      ? `<span class="pay-method-badge highlight">Twint</span><span class="pay-method-badge">Apple Pay</span><span class="pay-method-badge">Carte</span><span class="pay-method-badge">PayPal</span>`
+      : `<span class="pay-method-badge">Apple Pay</span><span class="pay-method-badge">Carte</span><span class="pay-method-badge">PayPal</span>`;
+  }
+
+  function updateTipUI() {
+    const isVip = selectedAmount >= PRIORITY_THRESHOLD;
+    const paySection = document.getElementById('paySection');
+    const banner = document.getElementById('priorityBanner');
+    if (selectedAmount > 0 && !tipPaid) {
+      paySection.classList.add('visible');
+      selectedCurrency = null;
+      document.getElementById('btnEUR').className = 'currency-btn';
+      document.getElementById('btnCHF').className = 'currency-btn';
+      document.getElementById('payBtnWrap').style.display = 'none';
+    } else if (!tipPaid) {
+      paySection.classList.remove('visible');
+    }
+    banner.classList.toggle('visible', isVip && selectedAmount > 0);
+    updateSubmitBtn();
+  }
+
+  function updateSubmitBtn() {
+    const isVip = selectedAmount >= PRIORITY_THRESHOLD;
+    const s = document.getElementById('submitBtn');
+    s.classList.toggle('priority-mode', isVip && selectedAmount > 0);
+    s.textContent = (isVip && selectedAmount > 0) ? '⚡ ENVOYER — PRIORITÉ' : 'ENVOYER MA DEMANDE';
+  }
+
+  function handlePayClick(e) {
+    if (!selectedCurrency) { e.preventDefault(); return; }
+    sessionStorage.setItem('nextrack_tip', JSON.stringify({ amount: selectedAmount, currency: selectedCurrency }));
+    setTimeout(() => {
+      document.getElementById('paySection').innerHTML = `
+        <button class="pay-btn normal" onclick="confirmPayment()" style="background:#1a1a1a;border:1px solid rgba(200,255,0,0.3);color:var(--accent);">
+          ✅ J'ai payé — continuer
+        </button>
+        <button class="no-tip-btn" onclick="clearTip()">Finalement, sans tip →</button>
+      `;
+    }, 2000);
+  }
+
+  function confirmPayment() {
+    tipPaid = true;
+    document.getElementById('paySection').classList.remove('visible');
+    document.getElementById('paidConfirm').classList.add('visible');
+    document.getElementById('tipWarning').classList.remove('visible');
+    updateSubmitBtn();
+  }
+
+  function clearTip() {
+    document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('freeAmount').value = '';
+    selectedAmount = 0; tipPaid = false; selectedCurrency = null;
+    document.getElementById('paySection').classList.remove('visible');
+    document.getElementById('priorityBanner').classList.remove('visible');
+    document.getElementById('paidConfirm').classList.remove('visible');
+    document.getElementById('tipWarning').classList.remove('visible');
+    document.getElementById('paySection').innerHTML = `
+      <span class="currency-label">Choisir ta devise</span>
+      <div class="currency-toggle">
+        <button class="currency-btn" id="btnEUR" onclick="selectCurrency('EUR')"><span class="currency-flag">🇪🇺</span><span class="currency-name">Euro</span><span class="currency-sub">Carte · Apple Pay · PayPal</span></button>
+        <button class="currency-btn" id="btnCHF" onclick="selectCurrency('CHF')"><span class="currency-flag">🇨🇭</span><span class="currency-name">Franc suisse</span><span class="currency-sub">Twint · Carte · Apple Pay</span></button>
+      </div>
+      <div id="payBtnWrap" style="display:none;flex-direction:column;gap:10px;">
+        <a href="#" target="_blank" id="payBtn" class="pay-btn normal" onclick="handlePayClick(event)"><span id="payBtnLabel">💳 Payer</span></a>
+        <div class="pay-methods" id="payMethods"></div>
+        <button class="no-tip-btn" onclick="clearTip()">Finalement, sans tip →</button>
+      </div>`;
+    updateSubmitBtn();
+  }
+
+  async function handleSubmit() {
+    const btn = document.getElementById('submitBtn');
+    const nameVal = document.getElementById('name').value.trim();
+    const tracks = ['t1','t2','t3','t4','t5'].map(id => document.getElementById(id).value.trim()).filter(Boolean);
+
+    document.getElementById('nameError').classList.remove('visible');
+    document.getElementById('tracksError').classList.remove('visible');
+    document.getElementById('tipWarning').classList.remove('visible');
+
+    let valid = true;
+    if (!nameVal) { document.getElementById('nameError').classList.add('visible'); valid = false; }
+    if (!tracks.length) { document.getElementById('tracksError').classList.add('visible'); valid = false; }
+    if (selectedAmount > 0 && !tipPaid) {
+      document.getElementById('tipWarning').classList.add('visible');
+      document.getElementById('tipWarning').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    if (!valid) return;
+
+    const isVip = selectedAmount >= PRIORITY_THRESHOLD;
+    const symbol = selectedCurrency === 'CHF' ? ' CHF' : '€';
+    const tipInfo = selectedAmount > 0 ? `${selectedAmount}${symbol}${isVip ? ' ⚡' : ''}` : 'Aucun';
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>ENVOI...';
+
+    try {
+      console.log('djProfile:', djProfile);
+      const insertData = {
+        dj_id: djProfile ? djProfile.id : null,
+        customer_name: nameVal,
+        tracks,
+        tip_amount: selectedAmount || 0,
+        tip_currency: selectedCurrency || 'EUR',
+        tip_paid: tipPaid,
+        is_priority: isVip,
+        status: 'pending',
+        session_date: new Date().toISOString().split('T')[0],
+      };
+      console.log('Inserting:', insertData);
+      const { data, error } = await sb.from('requests').insert(insertData).select();
+      console.log('Result:', data, error);
+      if (error) throw error;
+      sessionStorage.removeItem('nextrack_tip');
+      showSuccess(nameVal, isVip);
+    } catch (err) {
+      // Fallback email
+      const subject = encodeURIComponent(`${isVip ? '⚡ PRIORITÉ — ' : ''}🎵 [NexTTrack] Demande de ${nameVal}`);
+      const body = encodeURIComponent(`Prénom : ${nameVal}\nPriorité : ${isVip ? 'OUI ⚡' : 'Non'}\nTip : ${tipInfo}\n\nTitres :\n${tracks.map((t,i)=>`${i+1}. ${t}`).join('\n')}`);
+      window.location.href = `mailto:${djProfile?.notification_email || 'contact@nextttrack.app'}?subject=${subject}&body=${body}`;
+      btn.disabled = false;
+      btn.textContent = isVip ? '⚡ ENVOYER — PRIORITÉ' : 'ENVOYER MA DEMANDE';
+    }
+  }
+
+  function showSuccess(name, isVip) {
+    document.getElementById('formWrapper').style.display = 'none';
+    const screen = document.getElementById('successScreen');
+    const title = document.getElementById('successTitle');
+    const sub = document.getElementById('successSub');
+    const icon = screen.querySelector('.success-icon');
+    if (isVip) {
+      icon.textContent = '⚡'; title.textContent = 'PRIORITÉ !'; title.classList.add('vip');
+      sub.innerHTML = `Ta demande remonte en tête de liste, ${name}.<br>Le DJ la voit en premier — ça va envoyer 🔥`;
+    } else {
+      icon.textContent = '🎛️'; title.textContent = "C'est reçu !";
+      sub.innerHTML = `Ta demande est transmise, ${name}.<br>Il fait son possible pour la passer — profite ! 🔊`;
+    }
+    screen.classList.add('visible');
+  }
+
+  init();
+</script>
+</body>
+</html>

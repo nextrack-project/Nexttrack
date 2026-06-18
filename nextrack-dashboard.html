@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexTTrack — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="/supabase.min.js"></script>
+<style>
+  :root{--black:#080808;--card:#141414;--border:rgba(255,255,255,0.07);--accent:#c8ff00;--accent2:#ff3cac;--gold:#ffd166;--text:#e8e8e8;--muted:#666;--input-bg:#1a1a1a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:rgba(8,8,8,0.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+  .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.2em;color:var(--accent);}
+  .nav-logo span{color:rgba(200,255,0,0.4);}
+  .nav-dj{font-size:13px;color:var(--muted);}
+  .nav-dj strong{color:var(--text);}
+  .nav-actions{display:flex;gap:10px;align-items:center;}
+  .btn-fullscreen{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
+  .btn-fullscreen:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-logout{background:none;border:none;color:#333;font-size:12px;cursor:pointer;transition:color 0.2s;}
+  .btn-logout:hover{color:var(--muted);}
+
+  /* TABS */
+  .tab-nav{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;background:var(--black);}
+  .tab-link{padding:14px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:none;border-top:none;border-left:none;border-right:none;}
+  .tab-link.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* PAGES */
+  .page{display:none;padding:20px;max-width:800px;margin:0 auto;}
+  .page.active{display:block;}
+
+  /* FULLSCREEN MODE */
+  body.fullscreen .tab-nav, body.fullscreen nav{display:none;}
+  body.fullscreen .page{max-width:100%;padding:12px;}
+  body.fullscreen .fullscreen-bar{display:flex !important;}
+
+  .fullscreen-bar{display:none;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(8,8,8,0.97);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+  .fullscreen-bar .fs-title{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--accent);letter-spacing:0.15em;}
+  .btn-exit-fs{background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--muted);font-size:11px;cursor:pointer;}
+
+  /* STATS CARDS */
+  .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+  @media(min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr);}}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .stat-value{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;margin-bottom:4px;}
+  .stat-value.accent{color:var(--accent);}
+  .stat-value.gold{color:var(--gold);}
+  .stat-value.pink{color:var(--accent2);}
+  .stat-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);}
+
+  /* SESSION TOGGLE */
+  .session-bar{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;}
+  .session-status{display:flex;align-items:center;gap:10px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#333;}
+  .dot.live{background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite;}
+  .session-text{font-size:13px;}
+  .session-text strong{color:var(--text);}
+  .btn-session{padding:10px 20px;border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;}
+  .btn-session.start{background:var(--accent);color:#000;}
+  .btn-session.stop{background:rgba(255,107,107,0.15);color:#ff6b6b;border:1px solid rgba(255,107,107,0.3);}
+
+  /* REQUESTS LIST */
+  .requests-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .requests-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;color:var(--accent);}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:var(--accent);color:#000;border-radius:50%;font-size:11px;font-weight:700;margin-left:8px;}
+  .badge.priority{background:var(--gold);}
+
+  .filter-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .filter-btn{padding:6px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:20px;font-size:11px;color:var(--muted);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,255,0,0.06);}
+
+  .request-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;transition:all 0.2s;animation:slideIn 0.3s ease both;}
+  .request-card.priority{border-color:rgba(255,209,102,0.3);background:linear-gradient(135deg,#141414,#1a1508);}
+  .request-card.played{opacity:0.4;}
+  .request-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+  .request-name{font-weight:500;font-size:15px;}
+  .request-meta{display:flex;align-items:center;gap:8px;margin-top:3px;}
+  .request-time{font-size:11px;color:var(--muted);}
+  .priority-tag{font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:10px;background:rgba(255,209,102,0.15);color:var(--gold);border:1px solid rgba(255,209,102,0.3);}
+  .tip-tag{font-size:9px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(255,60,172,0.1);color:var(--accent2);border:1px solid rgba(255,60,172,0.2);}
+  .tracks-list{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+  .track-item{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+  .track-item::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--border);flex-shrink:0;}
+  .request-actions{display:flex;gap:8px;}
+  .btn-played{padding:8px 16px;background:rgba(200,255,0,0.1);border:1px solid rgba(200,255,0,0.2);border-radius:8px;color:var(--accent);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .btn-played:hover{background:rgba(200,255,0,0.15);}
+  .btn-reject{padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .btn-reject:hover{border-color:rgba(255,107,107,0.4);color:#ff6b6b;}
+
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+  .empty-icon{font-size:48px;margin-bottom:16px;display:block;opacity:0.3;}
+  .empty-text{font-size:14px;}
+
+  /* STATS PAGE */
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .chart-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.1em;color:var(--accent);margin-bottom:16px;}
+  .track-stat-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .track-stat-name{font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .track-stat-bar-wrap{flex:2;background:var(--input-bg);border-radius:4px;height:6px;overflow:hidden;}
+  .track-stat-bar{height:6px;border-radius:4px;background:var(--accent);transition:width 0.6s ease;}
+  .track-stat-count{font-size:12px;color:var(--muted);width:24px;text-align:right;}
+
+  .tips-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .tips-row:last-child{border-bottom:none;}
+  .tips-row .label{color:var(--muted);}
+  .tips-row .value{font-weight:500;}
+
+  /* SETTINGS PAGE */
+  .settings-section{margin-bottom:28px;}
+  .settings-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.1em;color:var(--accent);margin-bottom:14px;}
+  .field{margin-bottom:14px;}
+  label{display:block;font-size:11px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  input[type="text"],input[type="email"],input[type="url"]{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color 0.2s;}
+  input:focus{border-color:rgba(200,255,0,0.4);}
+  input::placeholder{color:#3a3a3a;}
+  .save-btn{padding:12px 28px;background:var(--accent);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.1em;color:#000;cursor:pointer;transition:all 0.2s;}
+  .save-btn:hover{transform:translateY(-1px);}
+
+  /* QR */
+  .qr-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;}
+  .qr-url{font-size:12px;color:var(--muted);margin-top:10px;word-break:break-all;}
+  .copy-btn{margin-top:12px;padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- FULLSCREEN BAR -->
+<div class="fullscreen-bar">
+  <span class="fs-title">NexT<span style="color:rgba(200,255,0,0.4)">Track</span> · LIVE</span>
+  <button class="btn-exit-fs" onclick="toggleFullscreen()">✕ Quitter</button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">NexT<span>Track</span></span>
+  <span class="nav-dj" id="navDjName">Chargement...</span>
+  <div class="nav-actions">
+    <button class="btn-fullscreen" onclick="toggleFullscreen()">⛶ Plein écran</button>
+    <button class="btn-logout" onclick="handleLogout()">Déconnexion</button>
+  </div>
+</nav>
+
+<!-- TABS -->
+<div class="tab-nav">
+  <button class="tab-link active" onclick="showPage('live')">🎛️ Live</button>
+  <button class="tab-link" onclick="showPage('stats')">📊 Stats</button>
+  <button class="tab-link" onclick="showPage('settings')">⚙️ Réglages</button>
+</div>
+
+<!-- PAGE LIVE -->
+<div class="page active" id="page-live">
+
+  <div style="height:16px;"></div>
+
+  <!-- Stats rapides -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value accent" id="statTotal">0</div>
+      <div class="stat-label">Demandes ce soir</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value pink" id="statPending">0</div>
+      <div class="stat-label">En attente</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#4a90e2" id="statPlayed">0</div>
+      <div class="stat-label">Joués</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value gold" id="statTips">0€</div>
+      <div class="stat-label">Tips ce soir</div>
+    </div>
+  </div>
+
+  <!-- Session -->
+  <div class="session-bar">
+    <div class="session-status">
+      <div class="dot" id="sessionDot"></div>
+      <div class="session-text" id="sessionText"><strong>Pas de session active</strong></div>
+    </div>
+    <button class="btn-session start" id="sessionBtn" onclick="toggleSession()">▶ DÉMARRER</button>
+  </div>
+
+  <!-- Requests -->
+  <div class="requests-header">
+    <div>
+      <span class="requests-title">Demandes</span>
+      <span class="badge" id="pendingBadge">0</span>
+    </div>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-btn active" onclick="filterRequests('all', this)">Toutes</button>
+    <button class="filter-btn" onclick="filterRequests('priority', this)">⚡ Priorité</button>
+    <button class="filter-btn" onclick="filterRequests('pending', this)">En attente</button>
+    <button class="filter-btn" onclick="filterRequests('played', this)">✓ Joués</button>
+  </div>
+
+  <div id="requestsList">
+    <div class="empty-state">
+      <span class="empty-icon">🎵</span>
+      <p class="empty-text">Les demandes apparaîtront ici en temps réel</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- PAGE STATS -->
+<div class="page" id="page-stats">
+  <div style="height:16px;"></div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value accent" id="statAllTime">0</div>
+      <div class="stat-label">Total demandes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value gold" id="statAllTips">0€</div>
+      <div class="stat-label">Total tips</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value pink" id="statSessions">0</div>
+      <div class="stat-label">Soirées</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:#4a90e2" id="statAvg">0</div>
+      <div class="stat-label">Moy. par soirée</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">🔥 Sons les plus demandés</div>
+    <div id="topTracks">
+      <div style="color:var(--muted);font-size:13px;">Pas encore de données</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title">💸 Résumé des tips</div>
+    <div id="tipsBreakdown">
+      <div class="tips-row"><span class="label">Tips 5€/CHF</span><span class="value" id="tips5">0</span></div>
+      <div class="tips-row"><span class="label">Tips 10€/CHF</span><span class="value" id="tips10">0</span></div>
+      <div class="tips-row"><span class="label">Tips 20€/CHF+</span><span class="value" id="tips20">0</span></div>
+      <div class="tips-row"><span class="label">Montant total</span><span class="value gold" id="tipsTotal">0€</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE SETTINGS -->
+<div class="page" id="page-settings">
+  <div style="height:16px;"></div>
+
+  <div class="settings-section">
+    <div class="settings-title">Mon profil DJ</div>
+    <div class="field"><label>Nom de scène</label><input type="text" id="settingName" placeholder="Mike Deem" /></div>
+    <div class="field"><label>Email de notification</label><input type="email" id="settingEmail" placeholder="ton@email.com" /></div>
+    <button class="save-btn" onclick="saveSettings()">SAUVEGARDER</button>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">Stripe Connect — Recevoir les tips</div>
+    <div id="stripeConnectStatus">
+      <div style="background:rgba(255,209,102,0.07);border:1px solid rgba(255,209,102,0.2);border-radius:10px;padding:14px;margin-bottom:14px;">
+        <p style="font-size:12px;color:#ffd166;line-height:1.6;">⚠️ Connecte ton compte Stripe pour recevoir les tips directement sur ton compte bancaire. NexTTrack prend 10% de commission.</p>
+      </div>
+      <button class="save-btn" id="stripeConnectBtn" onclick="connectStripe()" style="background:var(--accent2);color:#fff;">
+        💳 CONNECTER STRIPE
+      </button>
+      <div id="stripeConnectMsg" style="margin-top:10px;font-size:12px;color:var(--muted);"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">Mon QR Code</div>
+    <div class="qr-section">
+      <div id="qrCodeDisplay"></div>
+      <p class="qr-url" id="qrUrl">—</p>
+      <button class="copy-btn" onclick="copyUrl()">📋 Copier le lien</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://auotqmoflcjigqetxcfm.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1b3RxbW9mbGNqaWdxZXR4Y2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjUzMjEsImV4cCI6MjA5NzM0MTMyMX0.tYk78GudMkntmDTq6tv_AqiMCyXYOoBp9XyA7i-2ZCQ';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+  let djProfile = null;
+  let allRequests = [];
+  let currentFilter = 'all';
+  let sessionActive = false;
+  let realtimeChannel = null;
+
+  // ── INIT ──
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'nextrack-auth.html'; return; }
+    currentUser = session.user;
+    await loadProfile();
+    await loadRequests();
+    await loadStats();
+    subscribeRealtime();
+  }
+
+  async function loadProfile() {
+    const { data } = await sb.from('djs').select('*').eq('id', currentUser.id).single();
+    if (data) {
+      djProfile = data;
+      document.getElementById('navDjName').innerHTML = `<strong>${data.name}</strong>`;
+      document.getElementById('settingName').value = data.name || '';
+      document.getElementById('settingEmail').value = data.notification_email || '';
+      // QR Code
+      const appUrl = `https://nextttrack.netlify.app?dj=${data.slug}`;
+      document.getElementById('qrUrl').textContent = appUrl;
+      document.getElementById('qrCodeDisplay').innerHTML = '';
+      new QRCode(document.getElementById('qrCodeDisplay'), { text: appUrl, width: 160, height: 160, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.H });
+    }
+  }
+
+  async function loadRequests() {
+    const today = new Date().toISOString().split('T')[0];
+    const { data } = await sb.from('requests').select('*').eq('dj_id', currentUser.id).eq('session_date', today).order('is_priority', { ascending: false }).order('created_at', { ascending: false });
+    allRequests = data || [];
+    renderRequests();
+    updateStats();
+  }
+
+  async function loadStats() {
+    const { data: allReqs } = await sb.from('requests').select('*').eq('dj_id', currentUser.id);
+    const { data: sessions } = await sb.from('sessions').select('*').eq('dj_id', currentUser.id);
+    if (!allReqs) return;
+    document.getElementById('statAllTime').textContent = allReqs.length;
+    const totalTips = allReqs.filter(r=>r.tip_paid).reduce((s,r)=>s+parseFloat(r.tip_amount||0),0);
+    document.getElementById('statAllTips').textContent = totalTips.toFixed(0)+'€';
+    document.getElementById('statSessions').textContent = (sessions||[]).length;
+    const avg = sessions && sessions.length ? Math.round(allReqs.length / sessions.length) : 0;
+    document.getElementById('statAvg').textContent = avg;
+    // Top tracks
+    const trackCount = {};
+    allReqs.forEach(r => { (r.tracks||[]).forEach(t => { trackCount[t] = (trackCount[t]||0)+1; }); });
+    const sorted = Object.entries(trackCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const max = sorted[0]?.[1] || 1;
+    document.getElementById('topTracks').innerHTML = sorted.length ? sorted.map(([name,count])=>`
+      <div class="track-stat-row">
+        <span class="track-stat-name">${name}</span>
+        <div class="track-stat-bar-wrap"><div class="track-stat-bar" style="width:${(count/max*100).toFixed(0)}%"></div></div>
+        <span class="track-stat-count">${count}</span>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:13px;">Pas encore de données</div>';
+    // Tips breakdown
+    const t5 = allReqs.filter(r=>r.tip_paid&&r.tip_amount<=5).length;
+    const t10 = allReqs.filter(r=>r.tip_paid&&r.tip_amount>5&&r.tip_amount<=10).length;
+    const t20 = allReqs.filter(r=>r.tip_paid&&r.tip_amount>10).length;
+    document.getElementById('tips5').textContent = t5+'x';
+    document.getElementById('tips10').textContent = t10+'x';
+    document.getElementById('tips20').textContent = t20+'x';
+    document.getElementById('tipsTotal').textContent = totalTips.toFixed(2)+'€';
+  }
+
+  function renderRequests() {
+    const list = document.getElementById('requestsList');
+    let filtered = allRequests;
+    if (currentFilter === 'priority') filtered = allRequests.filter(r=>r.is_priority);
+    else if (currentFilter === 'pending') filtered = allRequests.filter(r=>r.status==='pending');
+    else if (currentFilter === 'played') filtered = allRequests.filter(r=>r.status==='played');
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="empty-state"><span class="empty-icon">🎵</span><p class="empty-text">${currentFilter==='all'?'Les demandes apparaîtront ici en temps réel':'Aucune demande dans cette catégorie'}</p></div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(r => {
+      const time = new Date(r.created_at).toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit'});
+      const tracks = (r.tracks||[]).map(t=>`<div class="track-item">${t}</div>`).join('');
+      return `
+      <div class="request-card ${r.is_priority?'priority':''} ${r.status==='played'?'played':''}" id="req-${r.id}">
+        <div class="request-top">
+          <div>
+            <div class="request-name">${r.customer_name}</div>
+            <div class="request-meta">
+              <span class="request-time">${time}</span>
+              ${r.is_priority?'<span class="priority-tag">⚡ Priorité</span>':''}
+              ${r.tip_amount>0?`<span class="tip-tag">+${r.tip_amount}${r.tip_currency==='CHF'?' CHF':'€'}</span>`:''}
+            </div>
+          </div>
+        </div>
+        <div class="tracks-list">${tracks}</div>
+        ${r.status==='pending'?`
+        <div class="request-actions">
+          <button class="btn-played" onclick="markPlayed('${r.id}')">✓ Joué</button>
+          <button class="btn-reject" onclick="markRejected('${r.id}')">✕ Passer</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  function updateStats() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayReqs = allRequests.filter(r=>r.session_date===today);
+    document.getElementById('statTotal').textContent = todayReqs.length;
+    document.getElementById('statPending').textContent = todayReqs.filter(r=>r.status==='pending').length;
+    document.getElementById('statPlayed').textContent = todayReqs.filter(r=>r.status==='played').length;
+    const tips = todayReqs.filter(r=>r.tip_paid).reduce((s,r)=>s+parseFloat(r.tip_amount||0),0);
+    document.getElementById('statTips').textContent = tips.toFixed(0)+'€';
+    document.getElementById('pendingBadge').textContent = todayReqs.filter(r=>r.status==='pending').length;
+  }
+
+  function filterRequests(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRequests();
+  }
+
+  async function markPlayed(id) {
+    await sb.from('requests').update({ status:'played', played_at: new Date().toISOString() }).eq('id', id);
+    allRequests = allRequests.map(r => r.id===id ? {...r, status:'played'} : r);
+    renderRequests(); updateStats();
+  }
+
+  async function markRejected(id) {
+    await sb.from('requests').update({ status:'rejected' }).eq('id', id);
+    allRequests = allRequests.map(r => r.id===id ? {...r, status:'rejected'} : r);
+    renderRequests(); updateStats();
+  }
+
+  async function toggleSession() {
+    sessionActive = !sessionActive;
+    const dot = document.getElementById('sessionDot');
+    const text = document.getElementById('sessionText');
+    const btn = document.getElementById('sessionBtn');
+    if (sessionActive) {
+      dot.classList.add('live');
+      text.innerHTML = '<strong>Session en cours</strong> — ce soir';
+      btn.className = 'btn-session stop';
+      btn.textContent = '■ TERMINER';
+      const today = new Date().toISOString().split('T')[0];
+      await sb.from('sessions').upsert({ dj_id: currentUser.id, date: today, active: true });
+    } else {
+      dot.classList.remove('live');
+      text.innerHTML = '<strong>Session terminée</strong>';
+      btn.className = 'btn-session start';
+      btn.textContent = '▶ DÉMARRER';
+      const today = new Date().toISOString().split('T')[0];
+      await sb.from('sessions').update({ active: false }).eq('dj_id', currentUser.id).eq('date', today);
+    }
+  }
+
+  // ── REALTIME ──
+  function subscribeRealtime() {
+    realtimeChannel = sb.channel('requests-channel')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'requests',
+        filter: `dj_id=eq.${currentUser.id}`
+      }, payload => {
+        allRequests.unshift(payload.new);
+        renderRequests(); updateStats();
+        // Notif sonore
+        try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play(); } catch(e) {}
+      })
+      .subscribe();
+  }
+
+  async function connectStripe() {
+    const btn = document.getElementById('stripeConnectBtn');
+    const msg = document.getElementById('stripeConnectMsg');
+    btn.disabled = true;
+    btn.textContent = 'Chargement...';
+    try {
+      const res = await fetch('/.netlify/functions/create-connect-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          djId: currentUser.id,
+          email: djProfile.email,
+          name: djProfile.name,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        // Sauvegarde l'account ID dans Supabase
+        await sb.from('djs').update({ stripe_account_id: data.accountId }).eq('id', currentUser.id);
+        // Redirige vers l'onboarding Stripe
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      msg.textContent = 'Erreur : ' + err.message;
+      msg.style.color = '#ff6b6b';
+      btn.disabled = false;
+      btn.textContent = '💳 CONNECTER STRIPE';
+    }
+  }
+
+  // Vérifie le retour Stripe
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('stripe') === 'success') {
+    const accountId = urlParams.get('account');
+    if (accountId) {
+      document.getElementById('stripeConnectMsg').textContent = '✅ Stripe connecté avec succès !';
+      document.getElementById('stripeConnectMsg').style.color = 'var(--accent)';
+      document.getElementById('stripeConnectBtn').textContent = '✅ STRIPE CONNECTÉ';
+      document.getElementById('stripeConnectBtn').style.background = 'rgba(200,255,0,0.1)';
+      document.getElementById('stripeConnectBtn').style.color = 'var(--accent)';
+      document.getElementById('stripeConnectBtn').style.border = '1px solid rgba(200,255,0,0.3)';
+    }
+  }
+
+  async function saveSettings() {
+    const name = document.getElementById('settingName').value.trim();
+    const email = document.getElementById('settingEmail').value.trim();
+    await sb.from('djs').update({ name, notification_email: email }).eq('id', currentUser.id);
+    document.getElementById('navDjName').innerHTML = `<strong>${name}</strong>`;
+  }
+
+  function copyUrl() {
+    const url = document.getElementById('qrUrl').textContent;
+    navigator.clipboard.writeText(url);
+    const btn = event.target;
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => btn.textContent = '📋 Copier le lien', 2000);
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-link').forEach(t=>t.classList.remove('active'));
+    document.getElementById(`page-${page}`).classList.add('active');
+    event.target.classList.add('active');
+    if (page === 'stats') loadStats();
+  }
+
+  function toggleFullscreen() {
+    document.body.classList.toggle('fullscreen');
+    document.getElementById('page-live').classList.add('active');
+  }
+
+  async function handleLogout() {
+    await sb.auth.signOut();
+    window.location.href = 'nextrack-auth.html';
+  }
+
+  init();
+</script>
+</body>
+</html>
