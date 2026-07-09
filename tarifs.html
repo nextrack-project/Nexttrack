@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexTTrack — Tarifs</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--black:#080808;--card:#141414;--border:rgba(255,255,255,0.07);--accent:#c8ff00;--accent2:#ff3cac;--gold:#ffd166;--text:#e8e8e8;--muted:#666;--input-bg:#1a1a1a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(ellipse,rgba(200,255,0,0.05) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(8,8,8,0.95);backdrop-filter:blur(10px);z-index:100;}
+  .nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.2em;color:var(--accent);text-decoration:none;}
+  .nav-logo span{color:rgba(200,255,0,0.4);}
+  .nav-cta{padding:10px 22px;background:var(--accent);border:none;border-radius:8px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.1em;color:#000;cursor:pointer;text-decoration:none;transition:all 0.2s;}
+  .nav-cta:hover{transform:translateY(-1px);box-shadow:0 0 20px rgba(200,255,0,0.3);}
+
+  /* HERO */
+  .hero{text-align:center;padding:80px 20px 60px;position:relative;z-index:1;}
+  .hero-badge{display:inline-block;background:rgba(200,255,0,0.08);border:1px solid rgba(200,255,0,0.2);border-radius:20px;padding:6px 16px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;}
+  .hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,8vw,80px);line-height:0.95;color:#fff;margin-bottom:16px;}
+  .hero h1 span{color:var(--accent);}
+  .hero p{font-size:16px;color:var(--muted);max-width:500px;margin:0 auto 32px;line-height:1.6;}
+  .trial-note{font-size:13px;color:var(--muted);margin-top:12px;}
+  .trial-note strong{color:var(--accent);}
+
+  /* TOGGLE PÉRIODE */
+  .period-toggle{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 48px;position:relative;z-index:1;}
+  .period-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:8px 20px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+  .period-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
+  .save-badge{background:rgba(255,60,172,0.15);border:1px solid rgba(255,60,172,0.3);border-radius:12px;padding:3px 10px;font-size:10px;color:var(--accent2);letter-spacing:0.1em;text-transform:uppercase;}
+
+  /* CARDS */
+  .plans{display:grid;grid-template-columns:1fr;gap:20px;max-width:900px;margin:0 auto;padding:0 20px 80px;position:relative;z-index:1;}
+  @media(min-width:600px){.plans{grid-template-columns:repeat(3,1fr);}}
+
+  .plan-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 24px;position:relative;transition:transform 0.2s,box-shadow 0.2s;}
+  .plan-card:hover{transform:translateY(-4px);}
+
+  .plan-card.popular{border-color:var(--accent);box-shadow:0 0 40px rgba(200,255,0,0.1);}
+  .plan-card.festival{border-color:rgba(255,60,172,0.3);}
+
+  .popular-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:0.15em;padding:4px 14px;border-radius:20px;white-space:nowrap;}
+
+  .plan-icon{font-size:32px;margin-bottom:16px;display:block;}
+  .plan-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.1em;color:#fff;margin-bottom:4px;}
+  .plan-desc{font-size:12px;color:var(--muted);margin-bottom:20px;letter-spacing:0.05em;}
+
+  .plan-price{margin-bottom:6px;}
+  .price-amount{font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:1;color:#fff;}
+  .plan-card.popular .price-amount{color:var(--accent);}
+  .plan-card.festival .price-amount{color:var(--accent2);}
+  .price-currency{font-size:20px;vertical-align:super;color:var(--muted);}
+  .price-period{font-size:12px;color:var(--muted);margin-bottom:4px;}
+  .price-equiv{font-size:11px;color:#444;margin-bottom:24px;}
+  .price-equiv strong{color:var(--accent);}
+
+  .divider{width:100%;height:1px;background:var(--border);margin-bottom:20px;}
+
+  .features{list-style:none;margin-bottom:28px;}
+  .features li{font-size:13px;color:var(--muted);padding:6px 0;display:flex;align-items:flex-start;gap:10px;}
+  .features li::before{content:'✓';color:var(--accent);font-weight:700;flex-shrink:0;margin-top:1px;}
+  .plan-card.festival .features li::before{color:var(--accent2);}
+
+  .plan-cta{display:block;width:100%;padding:14px;border-radius:12px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.12em;cursor:pointer;text-decoration:none;transition:all 0.2s;border:none;}
+  .plan-cta.primary{background:var(--accent);color:#000;box-shadow:0 0 20px rgba(200,255,0,0.2);}
+  .plan-cta.primary:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(200,255,0,0.35);}
+  .plan-cta.secondary{background:transparent;border:1px solid var(--border);color:var(--muted);}
+  .plan-cta.secondary:hover{border-color:var(--accent2);color:var(--accent2);}
+  .plan-cta.festival-cta{background:var(--accent2);color:#fff;box-shadow:0 0 20px rgba(255,60,172,0.2);}
+  .plan-cta.festival-cta:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(255,60,172,0.35);}
+
+  .trial-tag{text-align:center;font-size:11px;color:#444;margin-top:10px;letter-spacing:0.08em;}
+
+  /* FEATURES SECTION */
+  .features-section{max-width:900px;margin:0 auto;padding:0 20px 80px;position:relative;z-index:1;}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#fff;text-align:center;margin-bottom:8px;}
+  .section-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:40px;}
+
+  .features-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(min-width:600px){.features-grid{grid-template-columns:repeat(3,1fr);}}
+
+  .feature-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .feature-icon{font-size:28px;margin-bottom:12px;display:block;}
+  .feature-title{font-size:14px;font-weight:500;color:#fff;margin-bottom:6px;}
+  .feature-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+
+  /* FAQ */
+  .faq-section{max-width:640px;margin:0 auto;padding:0 20px 80px;position:relative;z-index:1;}
+  .faq-item{border-bottom:1px solid var(--border);padding:20px 0;}
+  .faq-q{font-size:14px;font-weight:500;color:#fff;margin-bottom:8px;}
+  .faq-a{font-size:13px;color:var(--muted);line-height:1.6;}
+
+  /* FOOTER */
+  footer{text-align:center;padding:32px 20px;border-top:1px solid var(--border);font-size:11px;color:#2a2a2a;letter-spacing:0.1em;position:relative;z-index:1;}
+  .legal-links{display:flex;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap;}
+  .legal-links a{font-size:10px;color:#2a2a2a;text-decoration:none;}
+  .legal-links a:hover{color:#555;}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .plan-card{animation:fadeUp 0.5s ease both;}
+  .plan-card:nth-child(2){animation-delay:0.1s;}
+  .plan-card:nth-child(3){animation-delay:0.2s;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">NexT<span>Track</span></a>
+  <a href="nextrack-auth.html" class="nav-cta">COMMENCER GRATUITEMENT</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">Tarifs simples et transparents</div>
+  <h1>L'outil qu'attendent<br>les <span>DJs pros</span></h1>
+  <p>Fini les interruptions pendant le mix. Gère tes demandes, reçois des tips et analyse tes soirées.</p>
+  <div class="trial-note"><strong>7 jours gratuits</strong> — aucune carte bancaire requise</div>
+</div>
+
+<div class="plans">
+
+  <!-- FESTIVAL -->
+  <div class="plan-card festival">
+    <span class="plan-icon">🎪</span>
+    <div class="plan-name">Festival</div>
+    <div class="plan-desc">Pour les événements ponctuels</div>
+    <div class="plan-price">
+      <span class="price-currency">€</span><span class="price-amount">9,90</span>
+    </div>
+    <div class="price-period">pour 7 jours</div>
+    <div class="price-equiv">Idéal pour un festival ou un événement unique</div>
+    <div class="divider"></div>
+    <ul class="features">
+      <li>Accès complet 7 jours</li>
+      <li>QR code personnalisé</li>
+      <li>Dashboard temps réel</li>
+      <li>Système de tips EUR & CHF</li>
+      <li>Priorité ⚡ avec tips</li>
+      <li>Stats de soirée</li>
+    </ul>
+    <a href="nextrack-auth.html" class="plan-cta festival-cta">OBTENIR LE PASS</a>
+    <div class="trial-tag">7 jours d'essai gratuit inclus</div>
+  </div>
+
+  <!-- MENSUEL -->
+  <div class="plan-card popular">
+    <div class="popular-badge">⭐ LE PLUS POPULAIRE</div>
+    <span class="plan-icon">🎛️</span>
+    <div class="plan-name">Mensuel</div>
+    <div class="plan-desc">Pour les DJs actifs</div>
+    <div class="plan-price">
+      <span class="price-currency">€</span><span class="price-amount">9,90</span>
+    </div>
+    <div class="price-period">par mois · résiliable à tout moment</div>
+    <div class="price-equiv">Moins de 25 centimes par jour</div>
+    <div class="divider"></div>
+    <ul class="features">
+      <li>Accès illimité</li>
+      <li>QR code personnalisé</li>
+      <li>Dashboard temps réel</li>
+      <li>Système de tips EUR & CHF</li>
+      <li>Priorité ⚡ avec tips</li>
+      <li>Stats avancées</li>
+      <li>Support prioritaire</li>
+    </ul>
+    <a href="nextrack-auth.html" class="plan-cta primary">COMMENCER</a>
+    <div class="trial-tag">7 jours d'essai gratuit inclus</div>
+  </div>
+
+  <!-- ANNUEL -->
+  <div class="plan-card">
+    <span class="plan-icon">🏆</span>
+    <div class="plan-name">Annuel</div>
+    <div class="plan-desc">Pour les pros engagés</div>
+    <div class="plan-price">
+      <span class="price-currency">€</span><span class="price-amount">89</span>
+    </div>
+    <div class="price-period">par an · soit 7,42€/mois</div>
+    <div class="price-equiv"><strong>Économise 25%</strong> vs mensuel</div>
+    <div class="divider"></div>
+    <ul class="features">
+      <li>Tout du plan Mensuel</li>
+      <li>Accès 12 mois complets</li>
+      <li>QR code personnalisé</li>
+      <li>Dashboard temps réel</li>
+      <li>Système de tips EUR & CHF</li>
+      <li>Priorité ⚡ avec tips</li>
+      <li>Stats avancées</li>
+      <li>Accès aux nouvelles fonctionnalités en avant-première</li>
+    </ul>
+    <a href="nextrack-auth.html" class="plan-cta secondary">CHOISIR L'ANNUEL</a>
+    <div class="trial-tag">7 jours d'essai gratuit inclus</div>
+  </div>
+
+</div>
+
+<!-- FEATURES -->
+<div class="features-section">
+  <div class="section-title">Tout ce dont tu as besoin</div>
+  <div class="section-sub">Une seule appli pour gérer tes soirées comme un pro</div>
+  <div class="features-grid">
+    <div class="feature-item">
+      <span class="feature-icon">📱</span>
+      <div class="feature-title">QR Code unique</div>
+      <div class="feature-desc">Chaque DJ a son propre QR code à poser sur sa table de mix</div>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">⚡</span>
+      <div class="feature-title">Temps réel</div>
+      <div class="feature-desc">Les demandes arrivent instantanément sur ton dashboard</div>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">💸</span>
+      <div class="feature-title">Tips intégrés</div>
+      <div class="feature-desc">Apple Pay, Twint, PayPal, carte — EUR et CHF</div>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">🎯</span>
+      <div class="feature-title">Priorité tips</div>
+      <div class="feature-desc">Les demandes avec tips remontent automatiquement en tête</div>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">📊</span>
+      <div class="feature-title">Stats soirée</div>
+      <div class="feature-desc">Sons les plus demandés, tips collectés, nombre de demandes</div>
+    </div>
+    <div class="feature-item">
+      <span class="feature-icon">🇨🇭</span>
+      <div class="feature-title">Zone frontalière</div>
+      <div class="feature-desc">Pensé pour la Haute-Savoie et la Suisse — EUR & CHF natifs</div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <div class="section-title">Questions fréquentes</div>
+  <div class="faq-item">
+    <div class="faq-q">Est-ce que je dois entrer ma carte bancaire pour l'essai ?</div>
+    <div class="faq-a">Non. Les 7 jours d'essai sont totalement gratuits, sans carte requise. Tu souscris seulement si tu veux continuer.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Comment je reçois les tips ?</div>
+    <div class="faq-a">Directement sur ton compte Stripe, puis viré sur ton compte bancaire selon la fréquence que tu configures (quotidien, hebdo, mensuel).</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Twint fonctionne pour mes clients suisses ?</div>
+    <div class="faq-a">Oui. Twint s'affiche automatiquement pour les clients qui paient en CHF depuis la Suisse.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Puis-je résilier à tout moment ?</div>
+    <div class="faq-a">Oui, l'abonnement mensuel est résiliable à tout moment. La résiliation prend effet à la fin de la période en cours.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">NexTTrack fonctionne pour les établissements sans DJ fixe ?</div>
+    <div class="faq-a">Oui. Un bar, un restaurant ou un club peut créer son compte et afficher le QR code pour que le public envoie ses demandes musicales.</div>
+  </div>
+</div>
+
+<footer>
+  <span style="color:rgba(200,255,0,0.2)">NexTTrack</span> · © 2026 Mike Charles-Achille
+  <div class="legal-links">
+    <a href="mentions-legales.html">Mentions légales</a>
+    <a href="politique-confidentialite.html">Confidentialité</a>
+    <a href="cgu.html">CGU</a>
+  </div>
+</footer>
+
+</body>
+</html>
