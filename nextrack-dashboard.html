@@ -219,6 +219,18 @@
 <div class="page" id="page-stats">
   <div style="height:16px;"></div>
 
+  <!-- Sélecteur de période -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.1em;color:var(--accent);">📊 Statistiques</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="filter-btn active" onclick="setPeriod(7, this)">7 jours</button>
+      <button class="filter-btn" onclick="setPeriod(30, this)">30 jours</button>
+      <button class="filter-btn" onclick="setPeriod(90, this)">3 mois</button>
+      <button class="filter-btn" onclick="setPeriod(365, this)">1 an</button>
+    </div>
+  </div>
+
+  <!-- Stats globales -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-value accent" id="statAllTime">0</div>
@@ -238,6 +250,15 @@
     </div>
   </div>
 
+  <!-- Historique par soirée -->
+  <div class="chart-card">
+    <div class="chart-title">📅 Historique des soirées</div>
+    <div id="sessionsHistory">
+      <div style="color:var(--muted);font-size:13px;">Pas encore de données</div>
+    </div>
+  </div>
+
+  <!-- Top sons -->
   <div class="chart-card">
     <div class="chart-title">🔥 Sons les plus demandés</div>
     <div id="topTracks">
@@ -245,6 +266,7 @@
     </div>
   </div>
 
+  <!-- Tips -->
   <div class="chart-card">
     <div class="chart-title">💸 Résumé des tips</div>
     <div id="tipsBreakdown">
@@ -338,20 +360,70 @@
     updateStats();
   }
 
+  let currentPeriod = 7;
+
+  function setPeriod(days, btn) {
+    currentPeriod = days;
+    document.querySelectorAll('#page-stats .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadStats();
+  }
+
   async function loadStats() {
-    const { data: allReqs } = await sb.from('requests').select('*').eq('dj_id', currentUser.id);
-    const { data: sessions } = await sb.from('sessions').select('*').eq('dj_id', currentUser.id);
+    const since = new Date();
+    since.setDate(since.getDate() - currentPeriod);
+    const sinceStr = since.toISOString().split('T')[0];
+
+    const { data: allReqs } = await sb.from('requests').select('*').eq('dj_id', currentUser.id).gte('session_date', sinceStr).order('session_date', { ascending: false });
+    const { data: allSessions } = await sb.from('requests').select('session_date').eq('dj_id', currentUser.id).gte('session_date', sinceStr);
+
     if (!allReqs) return;
+
+    // Stats globales
     document.getElementById('statAllTime').textContent = allReqs.length;
     const totalTips = allReqs.filter(r=>r.tip_paid).reduce((s,r)=>s+parseFloat(r.tip_amount||0),0);
     document.getElementById('statAllTips').textContent = totalTips.toFixed(0)+'€';
-    document.getElementById('statSessions').textContent = (sessions||[]).length;
-    const avg = sessions && sessions.length ? Math.round(allReqs.length / sessions.length) : 0;
+
+    // Soirées uniques
+    const uniqueDates = [...new Set((allSessions||[]).map(r=>r.session_date))].sort((a,b)=>b.localeCompare(a));
+    document.getElementById('statSessions').textContent = uniqueDates.length;
+    const avg = uniqueDates.length ? Math.round(allReqs.length / uniqueDates.length) : 0;
     document.getElementById('statAvg').textContent = avg;
+
+    // Historique par soirée
+    const histEl = document.getElementById('sessionsHistory');
+    if (uniqueDates.length === 0) {
+      histEl.innerHTML = '<div style="color:var(--muted);font-size:13px;">Pas encore de soirées sur cette période</div>';
+    } else {
+      histEl.innerHTML = uniqueDates.map(date => {
+        const dayReqs = allReqs.filter(r => r.session_date === date);
+        const dayTips = dayReqs.filter(r=>r.tip_paid).reduce((s,r)=>s+parseFloat(r.tip_amount||0),0);
+        const dayPriority = dayReqs.filter(r=>r.is_priority).length;
+        const dateLabel = new Date(date+'T12:00:00').toLocaleDateString('fr', {weekday:'short', day:'numeric', month:'short'});
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:14px;font-weight:500;color:var(--text);">${dateLabel}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">${dayReqs.length} demandes${dayPriority>0?' · '+dayPriority+' ⚡':''}</div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div style="text-align:center;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--accent);">${dayReqs.length}</div>
+              <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;">Sons</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);">${dayTips.toFixed(0)}€</div>
+              <div style="font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;">Tips</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
     // Top tracks
     const trackCount = {};
     allReqs.forEach(r => { (r.tracks||[]).forEach(t => { trackCount[t] = (trackCount[t]||0)+1; }); });
-    const sorted = Object.entries(trackCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const sorted = Object.entries(trackCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
     const max = sorted[0]?.[1] || 1;
     document.getElementById('topTracks').innerHTML = sorted.length ? sorted.map(([name,count])=>`
       <div class="track-stat-row">
@@ -359,6 +431,7 @@
         <div class="track-stat-bar-wrap"><div class="track-stat-bar" style="width:${(count/max*100).toFixed(0)}%"></div></div>
         <span class="track-stat-count">${count}</span>
       </div>`).join('') : '<div style="color:var(--muted);font-size:13px;">Pas encore de données</div>';
+
     // Tips breakdown
     const t5 = allReqs.filter(r=>r.tip_paid&&r.tip_amount<=5).length;
     const t10 = allReqs.filter(r=>r.tip_paid&&r.tip_amount>5&&r.tip_amount<=10).length;
