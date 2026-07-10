@@ -341,6 +341,28 @@
     const { data } = await sb.from('djs').select('*').eq('id', currentUser.id).single();
     if (data) {
       djProfile = data;
+
+      // Vérification période d'essai
+      if (data.plan === 'trial' && data.trial_ends_at) {
+        const trialEnd = new Date(data.trial_ends_at);
+        const now = new Date();
+        if (now > trialEnd) {
+          // Essai expiré — affiche la page de paiement
+          document.body.innerHTML = `
+            <div style="background:#080808;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;font-family:'DM Sans',sans-serif;text-align:center;">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.35em;color:#c8ff00;margin-bottom:16px;">NexTTrack</div>
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#fff;margin-bottom:12px;">Essai terminé</div>
+              <p style="font-size:15px;color:#666;max-width:420px;line-height:1.6;margin-bottom:36px;">Ton essai gratuit de 7 jours est terminé. Choisis un abonnement pour continuer à utiliser NexTTrack.</p>
+              <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;">
+                <a href="https://buy.stripe.com/bJe9AS7j99a26571nFdEs06" target="_blank" style="display:block;padding:16px;background:#c8ff00;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.12em;color:#000;text-decoration:none;">9,90€/MOIS</a>
+                <a href="https://buy.stripe.com/fZu9AS7j99a26571nFdEs07" target="_blank" style="display:block;padding:16px;background:#ffd166;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.12em;color:#000;text-decoration:none;">89€/AN — ÉCONOMISE 31%</a>
+                <a href="tarifs.html" style="font-size:12px;color:#444;margin-top:8px;text-decoration:none;">Voir les détails des offres</a>
+              </div>
+              <button onclick="supabase.createClient('https://auotqmoflcjigqetxcfm.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1b3RxbW9mbGNqaWdxZXR4Y2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjUzMjEsImV4cCI6MjA5NzM0MTMyMX0.tYk78GudMkntmDTq6tv_AqiMCyXYOoBp9XyA7i-2ZCQ').auth.signOut().then(()=>window.location.href='nextrack-auth.html')" style="margin-top:32px;background:none;border:none;font-size:12px;color:#333;cursor:pointer;font-family:'DM Sans',sans-serif;">Se déconnecter</button>
+            </div>`;
+          return;
+        }
+      }
       document.getElementById('navDjName').innerHTML = `<strong>${data.name}</strong>`;
       document.getElementById('settingName').value = data.name || '';
       document.getElementById('settingEmail').value = data.notification_email || '';
