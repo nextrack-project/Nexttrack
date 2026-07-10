@@ -311,7 +311,7 @@
         <li>Mode plein écran</li>
         <li>Support prioritaire</li>
       </ul>
-      <a href="https://buy.stripe.com/aFa00icDt71UbpraYfdEs08" target="_blank" class="pricing-cta outline">CHOISIR MENSUEL</a>
+      <a href="#" onclick="startCheckout('price_1Trah9Co1vntdAa95ZI6Kbmw')" class="pricing-cta outline">CHOISIR MENSUEL</a>
     </div>
 
     <div class="pricing-card featured">
@@ -331,7 +331,7 @@
         <li>Stats multi-soirées</li>
         <li>Nouvelles fonctionnalités en avant-première</li>
       </ul>
-      <a href="https://buy.stripe.com/aFa00icDt71UbpraYfdEs08" target="_blank" class="pricing-cta main">COMMENCER</a>
+      <a href="#" onclick="startCheckout('price_1Trah9Co1vntdAa95ZI6Kbmw')" class="pricing-cta main">COMMENCER</a>
     </div>
   </div>
   <div class="trial-note" style="margin-top:20px;"><strong style="color:var(--blue)">7 jours d'essai gratuit</strong> inclus sur tous les plans · Aucune carte bancaire requise</div>
@@ -341,7 +341,7 @@
 <div class="final-cta">
   <h2>Prêt à transformer<br>l'ambiance de <span>votre établissement</span> ?</h2>
   <p>Rejoignez les établissements qui ont modernisé leur expérience musicale avec NexTTrack.</p>
-  <a href="nextrack-auth.html" class="btn-primary">DÉMARRER GRATUITEMENT</a>
+  <a href="#" onclick="startCheckout('price_1Trah9Co1vntdAa95ZI6Kbmw')" class="btn-primary">DÉMARRER GRATUITEMENT</a>
 </div>
 
 <footer>
@@ -357,6 +357,52 @@
     <a href="cgu.html">CGU</a>
   </div>
 </footer>
+
+
+<script src="supabase.min.js"></script>
+<script>
+async function startCheckout(priceId) {
+  const btn = event.currentTarget;
+  const originalText = btn.textContent;
+  btn.textContent = 'Chargement...';
+  btn.style.opacity = '0.7';
+  btn.style.pointerEvents = 'none';
+
+  try {
+    const sb = window.supabase.createClient(
+      'https://auotqmoflcjigqetxcfm.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1b3RxbW9mbGNqaWdxZXR4Y2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjUzMjEsImV4cCI6MjA5NzM0MTMyMX0.tYk78GudMkntmDTq6tv_AqiMCyXYOoBp9XyA7i-2ZCQ'
+    );
+
+    const { data: { session } } = await sb.auth.getSession();
+    
+    if (!session) {
+      window.location.href = 'nextrack-auth.html';
+      return;
+    }
+
+    const { data: dj } = await sb.from('djs').select('email, id').eq('id', session.user.id).single();
+
+    const res = await fetch('https://auotqmoflcjigqetxcfm.supabase.co/functions/v1/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priceId, email: dj.email, djId: dj.id })
+    });
+
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Erreur inconnue');
+    }
+  } catch (err) {
+    btn.textContent = originalText;
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    alert('Erreur : ' + err.message);
+  }
+}
+</script>
 
 </body>
 </html>
