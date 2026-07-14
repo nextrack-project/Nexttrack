@@ -205,11 +205,36 @@
         <div class="card-title"><span class="num">2</span> Tes idées de sons</div>
         <label>Jusqu'à 5 titres <span class="optional-tag">(artiste — titre si possible)</span></label>
         <div class="tracks-grid">
-          <div class="track-row"><span class="track-num">1</span><input type="text" id="t1" placeholder="Ex : Drake — God's Plan" autocomplete="off" /></div>
-          <div class="track-row"><span class="track-num">2</span><input type="text" id="t2" placeholder="Ex : Beyoncé — Cuff It" autocomplete="off" /></div>
-          <div class="track-row"><span class="track-num">3</span><input type="text" id="t3" placeholder="Optionnel" autocomplete="off" /></div>
-          <div class="track-row"><span class="track-num">4</span><input type="text" id="t4" placeholder="Optionnel" autocomplete="off" /></div>
-          <div class="track-row"><span class="track-num">5</span><input type="text" id="t5" placeholder="Optionnel" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">1</span>
+            <div class="track-wrap">
+              <input type="text" id="t1" placeholder="Ex : Drake — God's Plan" autocomplete="off" oninput="spotifySearch(this,1)" onfocus="showResults(1)" />
+              <div class="spotify-results" id="sr1"></div>
+            </div>
+          </div>
+          <div class="track-row"><span class="track-num">2</span>
+            <div class="track-wrap">
+              <input type="text" id="t2" placeholder="Ex : Beyoncé — Cuff It" autocomplete="off" oninput="spotifySearch(this,2)" onfocus="showResults(2)" />
+              <div class="spotify-results" id="sr2"></div>
+            </div>
+          </div>
+          <div class="track-row"><span class="track-num">3</span>
+            <div class="track-wrap">
+              <input type="text" id="t3" placeholder="Optionnel" autocomplete="off" oninput="spotifySearch(this,3)" onfocus="showResults(3)" />
+              <div class="spotify-results" id="sr3"></div>
+            </div>
+          </div>
+          <div class="track-row"><span class="track-num">4</span>
+            <div class="track-wrap">
+              <input type="text" id="t4" placeholder="Optionnel" autocomplete="off" oninput="spotifySearch(this,4)" onfocus="showResults(4)" />
+              <div class="spotify-results" id="sr4"></div>
+            </div>
+          </div>
+          <div class="track-row"><span class="track-num">5</span>
+            <div class="track-wrap">
+              <input type="text" id="t5" placeholder="Optionnel" autocomplete="off" oninput="spotifySearch(this,5)" onfocus="showResults(5)" />
+              <div class="spotify-results" id="sr5"></div>
+            </div>
+          </div>
         </div>
         <div class="error-msg" id="tracksError">Mets au moins un titre 🎵</div>
       </div>
