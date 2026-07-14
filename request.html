@@ -142,6 +142,20 @@
   footer{text-align:center;margin-top:40px;font-size:11px;color:#2a2a2a;letter-spacing:0.15em;} .legal-links{display:flex;justify-content:center;gap:16px;margin-top:10px;flex-wrap:wrap;} .legal-links a{font-size:10px;color:#2a2a2a;text-decoration:none;letter-spacing:0.08em;transition:color 0.2s;} .legal-links a:hover{color:#555;}
   footer .ft-name{color:rgba(200,255,0,0.2);}
 
+
+  /* SPOTIFY SEARCH */
+  .track-wrap{position:relative;flex:1;}
+  .spotify-results{position:absolute;top:100%;left:0;right:0;background:#1a1a1a;border:1px solid rgba(200,255,0,0.2);border-radius:10px;z-index:100;overflow:hidden;display:none;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.6);}
+  .spotify-results.visible{display:block;}
+  .spotify-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .spotify-item:last-child{border-bottom:none;}
+  .spotify-item:hover{background:rgba(200,255,0,0.06);}
+  .spotify-img{width:36px;height:36px;border-radius:4px;object-fit:cover;flex-shrink:0;background:#333;}
+  .spotify-info{flex:1;min-width:0;}
+  .spotify-name{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .spotify-artist{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .spotify-badge{display:flex;align-items:center;gap:4px;font-size:9px;color:#1DB954;flex-shrink:0;}
+  .spotify-loading{padding:12px;text-align:center;font-size:12px;color:var(--muted);}
   @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
   @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -522,6 +536,83 @@
     screen.classList.add('visible');
   }
 
+
+  // ── SPOTIFY SEARCH ──
+  const SPOTIFY_FN = 'https://auotqmoflcjigqetxcfm.supabase.co/functions/v1/spotify-search';
+  let spotifyTimers = {};
+  let selectedTracks = {};
+
+  function spotifySearch(input, num) {
+    const query = input.value.trim();
+    const resultsEl = document.getElementById('sr' + num);
+    
+    // Si l'utilisateur efface le champ
+    if (query.length < 2) {
+      resultsEl.innerHTML = '';
+      resultsEl.classList.remove('visible');
+      delete selectedTracks[num];
+      return;
+    }
+
+    // Debounce 400ms
+    clearTimeout(spotifyTimers[num]);
+    spotifyTimers[num] = setTimeout(async () => {
+      resultsEl.innerHTML = '<div class="spotify-loading">🎵 Recherche...</div>';
+      resultsEl.classList.add('visible');
+      
+      try {
+        const res = await fetch(SPOTIFY_FN, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query })
+        });
+        const data = await res.json();
+        
+        if (!data.tracks || data.tracks.length === 0) {
+          resultsEl.innerHTML = '<div class="spotify-loading">Aucun résultat</div>';
+          return;
+        }
+
+        resultsEl.innerHTML = data.tracks.map(t => `
+          <div class="spotify-item" onclick="selectTrack(${num}, '${t.name.replace(/'/g,"\'")} — ${t.artist.replace(/'/g,"\'")}', '${t.image || ''}')">
+            <img class="spotify-img" src="${t.image || ''}" alt="${t.name}" onerror="this.style.display='none'" />
+            <div class="spotify-info">
+              <div class="spotify-name">${t.name}</div>
+              <div class="spotify-artist">${t.artist}</div>
+            </div>
+            <div class="spotify-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+              Spotify
+            </div>
+          </div>`).join('');
+      } catch (e) {
+        resultsEl.innerHTML = '<div class="spotify-loading">Erreur de recherche</div>';
+      }
+    }, 400);
+  }
+
+  function selectTrack(num, trackLabel, imageUrl) {
+    document.getElementById('t' + num).value = trackLabel;
+    selectedTracks[num] = { label: trackLabel, image: imageUrl };
+    document.getElementById('sr' + num).classList.remove('visible');
+    // Met à jour la couleur du numéro
+    const numEl = document.querySelector('.track-row:nth-child(' + num + ') .track-num');
+    if (numEl) numEl.style.color = 'var(--accent)';
+  }
+
+  function showResults(num) {
+    const query = document.getElementById('t' + num).value.trim();
+    if (query.length >= 2 && document.getElementById('sr' + num).innerHTML) {
+      document.getElementById('sr' + num).classList.add('visible');
+    }
+  }
+
+  // Ferme les résultats si on clique ailleurs
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.track-wrap')) {
+      document.querySelectorAll('.spotify-results').forEach(el => el.classList.remove('visible'));
+    }
+  });
   init();
 </script>
 </body>
