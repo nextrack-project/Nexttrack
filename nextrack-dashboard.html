@@ -393,6 +393,25 @@
       document.getElementById('navDjName').innerHTML = `<strong>${data.name}</strong>`;
       document.getElementById('settingName').value = data.name || '';
       document.getElementById('settingEmail').value = data.notification_email || '';
+
+      // Bandeau Stripe Connect si pas encore connecté
+      if (!data.stripe_connect_id) {
+        const banner = document.createElement('div');
+        banner.id = 'stripeConnectBanner';
+        banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:500;background:linear-gradient(90deg,#1a1200,#1a0a00);border-top:1px solid rgba(255,209,102,0.3);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;';
+        banner.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <span style="font-size:18px;">⚠️</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#ffd166;">Connecte ton Stripe pour recevoir tes tips</div>
+              <div style="font-size:11px;color:#888;margin-top:2px;">Sans ça, tes clients peuvent laisser des tips mais tu ne les reçois pas.</div>
+            </div>
+          </div>
+          <button onclick="showPage('settings');document.getElementById('stripeConnectBanner').style.display='none';" style="background:#ffd166;color:#000;border:none;border-radius:8px;padding:8px 16px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:0.1em;cursor:pointer;white-space:nowrap;">CONNECTER STRIPE →</button>
+          <button onclick="document.getElementById('stripeConnectBanner').style.display='none';" style="background:none;border:none;color:#444;cursor:pointer;font-size:18px;padding:4px;">✕</button>
+        `;
+        document.body.appendChild(banner);
+      }
       // QR Code
       const appUrl = `https://nextrack-project.github.io/Nexttrack?dj=${data.slug}`;
       document.getElementById('qrUrl').textContent = appUrl;
