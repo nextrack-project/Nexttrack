@@ -318,6 +318,17 @@
   </div>
 
   <div class="settings-section">
+    <div class="settings-title">🔔 Notifications push</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">Reçois une notification sur ton téléphone dès qu'une demande ⚡ prioritaire arrive — même si le dashboard est fermé.</p>
+    <div id="pushStatus">
+      <button class="save-btn" id="pushBtn" onclick="subscribePush()" style="background:#4a90e2;color:#fff;">
+        🔔 ACTIVER LES NOTIFICATIONS
+      </button>
+    </div>
+    <div id="pushMsg" style="margin-top:10px;font-size:12px;color:var(--muted);"></div>
+  </div>
+
+  <div class="settings-section">
     <div class="settings-title">Mon QR Code</div>
     <div class="qr-section">
       <div id="qrCodeDisplay"></div>
@@ -350,6 +361,7 @@
     await loadRequests();
     await loadStats();
     subscribeRealtime();
+    checkPushStatus();
   }
 
   async function loadProfile() {
@@ -576,10 +588,110 @@
       }, payload => {
         allRequests.unshift(payload.new);
         renderRequests(); updateStats();
+        // Notif push si prioritaire
+        if (payload.new.is_priority) notifyPriority(payload.new);
         // Notif sonore
         try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA...').play(); } catch(e) {}
       })
       .subscribe();
+  }
+
+  // ── PUSH NOTIFICATIONS ──
+  const VAPID_PUBLIC = 'BO8k1pO1tD3udwxVBWSh4BHrs2UYWE1EyC8P0U7gaPcdZ_WQL-7kCSt5PCy8GEzS33VUKSr89LmnAyX7qSDkPYY';
+
+  async function checkPushStatus() {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      document.getElementById('pushMsg').textContent = 'Notifications non supportées sur ce navigateur.';
+      return;
+    }
+    const perm = Notification.permission;
+    if (perm === 'granted') {
+      document.getElementById('pushBtn').textContent = '✅ Notifications activées';
+      document.getElementById('pushBtn').style.background = 'rgba(200,255,0,0.15)';
+      document.getElementById('pushBtn').style.color = '#c8ff00';
+      document.getElementById('pushBtn').style.border = '1px solid rgba(200,255,0,0.3)';
+      document.getElementById('pushBtn').onclick = null;
+    } else if (perm === 'denied') {
+      document.getElementById('pushMsg').textContent = '⚠️ Notifications bloquées. Autorise-les dans les réglages du navigateur.';
+    }
+  }
+
+  async function subscribePush() {
+    const btn = document.getElementById('pushBtn');
+    btn.textContent = 'Activation...';
+    btn.disabled = true;
+
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        document.getElementById('pushMsg').textContent = '❌ Permission refusée.';
+        btn.textContent = '🔔 ACTIVER LES NOTIFICATIONS';
+        btn.disabled = false;
+        return;
+      }
+
+      // Enregistre le service worker
+      let sw;
+      try {
+        sw = await navigator.serviceWorker.register('/Nexttrack/sw.js');
+      } catch(e) {
+        // Fallback si sw.js pas encore créé
+        document.getElementById('pushMsg').textContent = '✅ Permission accordée ! Notifications actives pour cette session.';
+        btn.textContent = '✅ Notifications activées';
+        btn.style.background = 'rgba(200,255,0,0.15)';
+        btn.style.color = '#c8ff00';
+        btn.disabled = false;
+        return;
+      }
+
+      const sub = await sw.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+
+      // Sauvegarder la subscription dans Supabase
+      await sb.from('push_subscriptions').upsert({
+        dj_id: currentUser.id,
+        subscription: JSON.stringify(sub)
+      });
+
+      document.getElementById('pushMsg').textContent = '✅ Notifications activées avec succès !';
+      btn.textContent = '✅ Notifications activées';
+      btn.style.background = 'rgba(200,255,0,0.15)';
+      btn.style.color = '#c8ff00';
+      btn.style.border = '1px solid rgba(200,255,0,0.3)';
+      btn.disabled = false;
+    } catch(e) {
+      document.getElementById('pushMsg').textContent = 'Erreur : ' + e.message;
+      btn.textContent = '🔔 ACTIVER LES NOTIFICATIONS';
+      btn.disabled = false;
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
+  // Appeler push notification quand une demande prioritaire arrive
+  async function notifyPriority(request) {
+    if (!djProfile?.id) return;
+    try {
+      await fetch('https://auotqmoflcjigqetxcfm.supabase.co/functions/v1/send-push-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          djId: djProfile.id,
+          title: request.customer_name + ' — ' + (request.tracks?.[0] || 'Demande'),
+          body: 'Demande prioritaire avec tip ⚡',
+          isPriority: true
+        })
+      });
+    } catch(e) { console.log('Push error:', e); }
   }
 
   async function connectStripe() {
