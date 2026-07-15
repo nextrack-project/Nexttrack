@@ -700,20 +700,16 @@
     btn.disabled = true;
     btn.textContent = 'Chargement...';
     try {
-      const res = await fetch('/.netlify/functions/create-connect-account', {
+      const res = await fetch('https://auotqmoflcjigqetxcfm.supabase.co/functions/v1/create-connect-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           djId: currentUser.id,
           email: djProfile.email,
-          name: djProfile.name,
         }),
       });
       const data = await res.json();
       if (data.url) {
-        // Sauvegarde l'account ID dans Supabase
-        await sb.from('djs').update({ stripe_account_id: data.accountId }).eq('id', currentUser.id);
-        // Redirige vers l'onboarding Stripe
         window.location.href = data.url;
       } else {
         throw new Error(data.error);
@@ -729,15 +725,16 @@
   // Vérifie le retour Stripe
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('stripe') === 'success') {
-    const accountId = urlParams.get('account');
-    if (accountId) {
-      document.getElementById('stripeConnectMsg').textContent = '✅ Stripe connecté avec succès !';
-      document.getElementById('stripeConnectMsg').style.color = 'var(--accent)';
-      document.getElementById('stripeConnectBtn').textContent = '✅ STRIPE CONNECTÉ';
-      document.getElementById('stripeConnectBtn').style.background = 'rgba(200,255,0,0.1)';
-      document.getElementById('stripeConnectBtn').style.color = 'var(--accent)';
-      document.getElementById('stripeConnectBtn').style.border = '1px solid rgba(200,255,0,0.3)';
-    }
+    setTimeout(() => {
+      const msg = document.getElementById('stripeConnectMsg');
+      const btn = document.getElementById('stripeConnectBtn');
+      if(msg) { msg.textContent = '✅ Stripe connecté avec succès !'; msg.style.color = 'var(--accent)'; }
+      if(btn) { btn.textContent = '✅ STRIPE CONNECTÉ'; btn.style.background = 'rgba(200,255,0,0.1)'; btn.style.color = 'var(--accent)'; btn.style.border = '1px solid rgba(200,255,0,0.3)'; }
+      showPage('settings');
+    }, 1000);
+  }
+  if (urlParams.get('stripe') === 'refresh') {
+    setTimeout(() => { connectStripe(); }, 1000);
   }
 
   async function saveSettings() {
