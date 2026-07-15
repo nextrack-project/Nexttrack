@@ -339,11 +339,6 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const PRIORITY_THRESHOLD = 20;
-  const STRIPE_LINKS = {
-    EUR: { 5: "https://buy.stripe.com/5kQ00iavlgCualn1nFdEs00", 10: "https://buy.stripe.com/28E00i8ndcmefFHfevdEs01", 20: "https://buy.stripe.com/28EfZg8nddqidxzaYfdEs02" },
-    CHF: { 5: "https://buy.stripe.com/4gMeVcdHxae69hjc2jdEs03", 10: "https://buy.stripe.com/dRm4gy5b10Dwalnd6ndEs04", 20: "https://buy.stripe.com/6oUbJ046X1HA3WZ2rJdEs05" },
-  };
-
   let djProfile = null;
   let selectedAmount = 0;
   let selectedCurrency = null;
@@ -388,7 +383,31 @@
     document.getElementById('mainContent').style.display = 'block';
   }
 
-  function getStripeLink(amount, currency) {
+  const CREATE_TIP_FN = 'https://auotqmoflcjigqetxcfm.supabase.co/functions/v1/create-tip-payment';
+
+  async function getStripeLink(amount, currency) {
+    // Si le DJ a un compte Stripe Connect → utilise la fonction avec commission
+    if (djProfile?.stripe_connect_id) {
+      try {
+        const res = await fetch(CREATE_TIP_FN, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            djId: djProfile.id,
+            amount: amount,
+            currency: currency,
+            requestId: null
+          })
+        });
+        const data = await res.json();
+        if (data.url) return data.url;
+      } catch(e) { console.log('Tip function error:', e); }
+    }
+    // Fallback sur les Payment Links fixes
+    const STRIPE_LINKS = {
+      EUR: { 5: "https://buy.stripe.com/5kQ00iavlgCualn1nFdEs00", 10: "https://buy.stripe.com/28E00i8ndcmefFHfevdEs01", 20: "https://buy.stripe.com/28EfZg8nddqidxzaYfdEs02" },
+      CHF: { 5: "https://buy.stripe.com/4gMeVcdHxae69hjc2jdEs03", 10: "https://buy.stripe.com/dRm4gy5b10Dwalnd6ndEs04", 20: "https://buy.stripe.com/6oUbJ046X1HA3WZ2rJdEs05" },
+    };
     const links = STRIPE_LINKS[currency];
     if (amount <= 5) return links[5];
     if (amount <= 10) return links[10];
@@ -416,7 +435,7 @@
     updateTipUI();
   }
 
-  function selectCurrency(currency) {
+  async function selectCurrency(currency) {
     selectedCurrency = currency;
     document.getElementById('btnEUR').className = 'currency-btn' + (currency === 'EUR' ? ' active-eur' : '');
     document.getElementById('btnCHF').className = 'currency-btn' + (currency === 'CHF' ? ' active-chf' : '');
@@ -426,7 +445,9 @@
     const payBtnLabel = document.getElementById('payBtnLabel');
     const payMethods = document.getElementById('payMethods');
     wrap.style.display = 'flex';
-    payBtn.href = getStripeLink(selectedAmount, currency);
+    payBtnLabel.textContent = '⏳ Préparation...';
+    const url = await getStripeLink(selectedAmount, currency);
+    payBtn.href = url;
     payBtn.className = 'pay-btn ' + (isVip ? 'vip-pay' : 'normal');
     const symbol = currency === 'EUR' ? '€' : ' CHF';
     payBtnLabel.textContent = isVip ? `⚡ Payer ${selectedAmount}${symbol} — Priorité` : `💳 Payer ${selectedAmount}${symbol}`;
