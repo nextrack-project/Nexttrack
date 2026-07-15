@@ -212,44 +212,11 @@
     .nav-links .nav-link{display:none;}
   }
 
-  /* LANGUAGE SELECTOR */
-  .lang-wrap{position:fixed;top:12px;right:16px;z-index:200;}
-  .lang-trigger{display:flex;align-items:center;gap:6px;background:rgba(20,20,20,0.95);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:#888;transition:all 0.2s;backdrop-filter:blur(8px);}
-  .lang-trigger:hover{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
-  .lang-trigger .flag{font-size:14px;}
-  .lang-trigger .code{font-weight:500;letter-spacing:0.05em;}
-  .lang-trigger .arrow{font-size:9px;transition:transform 0.2s;}
-  .lang-wrap.open .lang-trigger{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
-  .lang-wrap.open .arrow{transform:rotate(180deg);}
-  .lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#141414;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:none;}
-  .lang-wrap.open .lang-dropdown{display:block;}
-  .lang-option{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:#888;transition:background 0.15s;}
-  .lang-option:hover{background:rgba(255,255,255,0.04);color:#e8e8e8;}
-  .lang-option.active{color:#c8ff00;background:rgba(200,255,0,0.05);}
-  .lang-option .o-flag{font-size:16px;}
-  .lang-option .o-name{flex:1;}
-  .lang-option .o-check{font-size:11px;color:#c8ff00;opacity:0;}
-  .lang-option.active .o-check{opacity:1;}
 </style>
 </head>
 <body>
 
 
-<div class="lang-wrap" id="langWrap">
-  <div class="lang-trigger" onclick="toggleLangMenu(event)">
-    <span class="flag" id="currentFlag">🇫🇷</span>
-    <span class="code" id="currentCode">FR</span>
-    <span class="arrow">▾</span>
-  </div>
-  <div class="lang-dropdown">
-    <div class="lang-option active" onclick="setLang('fr')" id="opt-fr"><span class="o-flag">🇫🇷</span><span class="o-name">Français</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('en')" id="opt-en"><span class="o-flag">🇬🇧</span><span class="o-name">English</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('es')" id="opt-es"><span class="o-flag">🇪🇸</span><span class="o-name">Español</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('de')" id="opt-de"><span class="o-flag">🇩🇪</span><span class="o-name">Deutsch</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('pt')" id="opt-pt"><span class="o-flag">🇵🇹</span><span class="o-name">Português</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('it')" id="opt-it"><span class="o-flag">🇮🇹</span><span class="o-name">Italiano</span><span class="o-check">✓</span></div>
-  </div>
-</div>
 
 <nav>
   <a href="#" class="nav-logo">NexT<span>Track</span></a>
@@ -257,7 +224,22 @@
     <a href="#comment" class="nav-link">Comment ça marche</a>
     <a href="#pour-qui" class="nav-link">Pour qui</a>
     <a href="#tarifs" class="nav-link">Tarifs</a>
-    <a href="#commencer" class="nav-cta">ESSAI GRATUIT</a>
+    <div class="lang-wrap" id="langWrap" style="position:relative;">
+      <div class="lang-trigger" onclick="toggleLangMenu(event)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:#888;">
+        <span id="currentFlag">🇫🇷</span>
+        <span id="currentCode" style="font-weight:500;letter-spacing:0.05em;">FR</span>
+        <span style="font-size:8px;margin-left:2px;" id="langArrow">▾</span>
+      </div>
+      <div id="langDropdown" style="position:absolute;top:calc(100% + 8px);right:0;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;min-width:155px;box-shadow:0 12px 32px rgba(0,0,0,0.8);z-index:9999;display:none;">
+        <div onclick="setLang('fr')" id="opt-fr" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#c8ff00;border-bottom:1px solid rgba(255,255,255,0.04);">🇫🇷 Français ✓</div>
+        <div onclick="setLang('en')" id="opt-en" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇬🇧 English</div>
+        <div onclick="setLang('es')" id="opt-es" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇪🇸 Español</div>
+        <div onclick="setLang('de')" id="opt-de" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇩🇪 Deutsch</div>
+        <div onclick="setLang('pt')" id="opt-pt" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇵🇹 Português</div>
+        <div onclick="setLang('it')" id="opt-it" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;">🇮🇹 Italiano</div>
+      </div>
+    </div>
+    <a href="#commencer" class="nav-cta" id="heroCta1">ESSAI GRATUIT</a>
   </div>
 </nav>
 
@@ -628,13 +610,21 @@
 const LANG_FLAGS = {fr:'🇫🇷',en:'🇬🇧',es:'🇪🇸',de:'🇩🇪',pt:'🇵🇹',it:'🇮🇹'};
 const LANG_NAMES = {fr:'FR',en:'EN',es:'ES',de:'DE',pt:'PT',it:'IT'};
 
-function toggleLangMenu() {
-  document.getElementById('langWrap').classList.toggle('open');
+function toggleLangMenu(e) {
+  if(e) e.stopPropagation();
+  const dd = document.getElementById('langDropdown');
+  const arrow = document.getElementById('langArrow');
+  if(!dd) return;
+  const isOpen = dd.style.display === 'block';
+  dd.style.display = isOpen ? 'none' : 'block';
+  if(arrow) arrow.textContent = isOpen ? '▾' : '▴';
 }
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.lang-wrap')) {
-    const w = document.getElementById('langWrap');
-    if(w) w.classList.remove('open');
+  if (!e.target.closest('#langWrap')) {
+    const dd3 = document.getElementById('langDropdown');
+    if(dd3) dd3.style.display='none';
+    const arr3 = document.getElementById('langArrow');
+    if(arr3) arr3.textContent='▾';
   }
 });
 
@@ -666,7 +656,7 @@ function setLang(lang) {
   document.querySelectorAll('.lang-option').forEach(o => {
     o.classList.toggle('active', o.id === 'opt-' + lang);
   });
-  document.getElementById('langWrap').classList.remove('open');
+  const dd2 = document.getElementById('langDropdown'); if(dd2) dd2.style.display='none'; const arr = document.getElementById('langArrow'); if(arr) arr.textContent='▾';
   // Apply translations based on page type
   if(typeof applyPageLang === 'function') applyPageLang(lang);
 }
