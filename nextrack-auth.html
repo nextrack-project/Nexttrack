@@ -277,15 +277,15 @@ document.addEventListener("click", () => {
 })();
 
 function showForgotPassword() {
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('signupForm').style.display = 'none';
-    document.getElementById('forgotScreen').style.display = 'block';
-  }
+  document.getElementById('loginCard').style.display = 'none';
+  document.getElementById('signupCard').style.display = 'none';
+  document.getElementById('forgotScreen').style.display = 'block';
+}
 
 function showLogin() {
-    document.getElementById('forgotScreen').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-  }
+  document.getElementById('forgotScreen').style.display = 'none';
+  document.getElementById('loginCard').style.display = 'block';
+}
 
 async function sendReset() {
     const email = document.getElementById('forgotEmail').value.trim();
