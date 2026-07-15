@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexTTrack — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--black:#080808;--card:#141414;--border:rgba(255,255,255,0.07);--accent:#c8ff00;--accent2:#ff3cac;--gold:#ffd166;--blue:#4a90e2;--text:#e8e8e8;--muted:#666;--red:#ff6b6b;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--black);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+
+  /* TOPBAR */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:#0e0e0e;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+  .topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.2em;color:var(--accent);}
+  .topbar-title{font-size:13px;color:var(--muted);}
+  .btn-logout{background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+
+  /* LOADING */
+  .loading{text-align:center;padding:80px 20px;color:var(--muted);font-size:14px;}
+
+  /* STATS GLOBALES */
+  .stats-section{padding:24px;max-width:1200px;margin:0 auto;}
+  .stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;}
+  @media(min-width:600px){.stats-row{grid-template-columns:repeat(4,1fr);}}
+  @media(min-width:900px){.stats-row{grid-template-columns:repeat(6,1fr);}}
+  .stat-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+  .stat-val{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;}
+  .stat-label{font-size:10px;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px;}
+
+  /* REVENUE CARD */
+  .revenue-card{background:linear-gradient(135deg,#141a10,#141414);border:1px solid rgba(200,255,0,0.2);border-radius:14px;padding:20px;margin-bottom:24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  @media(max-width:600px){.revenue-card{grid-template-columns:1fr;}}
+  .rev-item{text-align:center;}
+  .rev-val{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent);}
+  .rev-label{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  /* FILTERS */
+  .filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .filter-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:all 0.2s;}
+  .filter-btn.active{background:var(--accent);color:#000;border-color:var(--accent);}
+
+  /* TABLE */
+  .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+  .table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .table-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:0.1em;color:var(--accent);}
+  .table-count{font-size:12px;color:var(--muted);}
+  .search-input{background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none;width:200px;}
+  .search-input:focus{border-color:rgba(200,255,0,0.3);}
+
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:#0e0e0e;}
+  td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.05em;}
+  .badge-pro{background:rgba(200,255,0,0.12);color:var(--accent);border:1px solid rgba(200,255,0,0.2);}
+  .badge-trial{background:rgba(74,144,226,0.12);color:var(--blue);border:1px solid rgba(74,144,226,0.2);}
+  .badge-expired{background:rgba(255,107,107,0.12);color:var(--red);border:1px solid rgba(255,107,107,0.2);}
+  .badge-stripe{background:rgba(200,255,0,0.08);color:var(--accent);font-size:9px;}
+  .badge-no-stripe{background:rgba(255,107,107,0.08);color:var(--red);font-size:9px;}
+
+  .action-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all 0.2s;margin-right:4px;}
+  .action-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .action-btn.danger:hover{border-color:var(--red);color:var(--red);}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#141414;border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:100%;}
+  .modal-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;margin-bottom:16px;}
+  .modal-field{margin-bottom:14px;}
+  .modal-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block;}
+  .modal-select{width:100%;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;}
+  .modal-btns{display:flex;gap:10px;margin-top:20px;}
+  .modal-save{flex:1;padding:12px;background:var(--accent);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#000;cursor:pointer;}
+  .modal-cancel{padding:12px 20px;background:none;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--muted);cursor:pointer;}
+
+  /* LOGIN */
+  .login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+  .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;max-width:360px;width:100%;text-align:center;}
+  .login-title{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
+  .login-input{width:100%;background:#1a1a1a;border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;}
+  .login-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:18px;color:#000;cursor:pointer;}
+  .login-error{font-size:12px;color:var(--red);margin-top:10px;}
+
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:0.1em;color:#fff;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.3em;color:var(--accent);margin-bottom:12px;">NexTTrack</div>
+    <div class="login-title">Admin</div>
+    <div class="login-sub">Accès réservé</div>
+    <input type="password" class="login-input" id="adminPassword" placeholder="Mot de passe admin" onkeydown="if(event.key==='Enter')checkPassword()" />
+    <button class="login-btn" onclick="checkPassword()">ACCÉDER</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD ADMIN -->
+<div id="adminDashboard" style="display:none;">
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">NexTTrack Admin</div>
+      <div class="topbar-title">Tableau de bord administrateur</div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Déconnexion</button>
+  </div>
+
+  <div class="stats-section">
+
+    <!-- STATS GLOBALES -->
+    <div class="stats-row" id="globalStats">
+      <div class="stat-box"><div class="stat-val" id="totalUsers" style="color:var(--accent)">—</div><div class="stat-label">Utilisateurs</div></div>
+      <div class="stat-box"><div class="stat-val" id="totalPro" style="color:var(--accent)">—</div><div class="stat-label">Abonnés Pro</div></div>
+      <div class="stat-box"><div class="stat-val" id="totalTrial" style="color:var(--blue)">—</div><div class="stat-label">En essai</div></div>
+      <div class="stat-box"><div class="stat-val" id="totalExpired" style="color:var(--red)">—</div><div class="stat-label">Expirés</div></div>
+      <div class="stat-box"><div class="stat-val" id="totalStripe" style="color:var(--gold)">—</div><div class="stat-label">Stripe connecté</div></div>
+      <div class="stat-box"><div class="stat-val" id="totalRequests" style="color:var(--muted)">—</div><div class="stat-label">Demandes total</div></div>
+    </div>
+
+    <!-- REVENUS ESTIMÉS -->
+    <div class="revenue-card">
+      <div class="rev-item">
+        <div class="rev-val" id="revMonthly">—</div>
+        <div class="rev-label">Revenus mensuels estimés</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-val" id="revAnnual" style="color:var(--gold)">—</div>
+        <div class="rev-label">Revenus annuels estimés</div>
+      </div>
+      <div class="rev-item">
+        <div class="rev-val" id="revTips" style="color:var(--accent2)">—</div>
+        <div class="rev-label">Com. tips estimées (10%)</div>
+      </div>
+    </div>
+
+    <!-- LISTE UTILISATEURS -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <div>
+          <div class="table-title">Utilisateurs</div>
+          <div class="table-count" id="userCount">Chargement...</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" class="search-input" placeholder="Rechercher..." oninput="filterUsers(this.value)" />
+        </div>
+      </div>
+      <div class="filters" style="padding:12px 20px 0;">
+        <button class="filter-btn active" onclick="setFilter('all',this)">Tous</button>
+        <button class="filter-btn" onclick="setFilter('pro',this)">Pro</button>
+        <button class="filter-btn" onclick="setFilter('trial',this)">Essai</button>
+        <button class="filter-btn" onclick="setFilter('expired',this)">Expirés</button>
+        <button class="filter-btn" onclick="setFilter('no-stripe',this)">Sans Stripe</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom / Email</th>
+              <th>Plan</th>
+              <th>Stripe Connect</th>
+              <th>Inscription</th>
+              <th>Essai expire</th>
+              <th>Demandes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITÉ RÉCENTE -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">Activité récente</div>
+        <div class="table-count" id="recentCount"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>DJ</th>
+              <th>Client</th>
+              <th>Titre</th>
+              <th>Tip</th>
+              <th>Priorité</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="recentTable">
+            <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL MODIFIER PLAN -->
+<div class="modal-overlay" id="modalPlan">
+  <div class="modal">
+    <div class="modal-title">Modifier le plan</div>
+    <div id="modalUserInfo" style="font-size:13px;color:var(--muted);margin-bottom:16px;"></div>
+    <div class="modal-field">
+      <label class="modal-label">Plan</label>
+      <select class="modal-select" id="modalPlanSelect">
+        <option value="trial">Trial — Essai gratuit</option>
+        <option value="pro">Pro — Abonné actif</option>
+        <option value="expired">Expired — Expiré</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-save" onclick="savePlan()">SAUVEGARDER</button>
+    </div>
+  </div>
+</div>
+
+<script src="supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://auotqmoflcjigqetxcfm.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1b3RxbW9mbGNqaWdxZXR4Y2ZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3NjUzMjEsImV4cCI6MjA5NzM0MTMyMX0.tYk78GudMkntmDTq6tv_AqiMCyXYOoBp9XyA7i-2ZCQ';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Mot de passe admin (simple protection)
+  const ADMIN_PASSWORD = 'NexTTrack2026!';
+  const ADMIN_SESSION_KEY = 'nt_admin_auth';
+
+  let allUsers = [];
+  let currentFilter = 'all';
+  let selectedUserId = null;
+  let requestsPerDj = {};
+
+  function checkPassword() {
+    const pwd = document.getElementById('adminPassword').value;
+    if (pwd === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_SESSION_KEY, '1');
+      showDashboard();
+    } else {
+      document.getElementById('loginError').textContent = 'Mot de passe incorrect';
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    location.reload();
+  }
+
+  function showDashboard() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'block';
+    loadData();
+  }
+
+  // Auto-login si déjà authentifié
+  if (localStorage.getItem(ADMIN_SESSION_KEY)) showDashboard();
+
+  async function loadData() {
+    // Charger tous les DJs
+    const { data: djs } = await sb.from('djs').select('*').order('created_at', { ascending: false });
+    if (!djs) return;
+    allUsers = djs;
+
+    // Charger le nombre de demandes par DJ
+    const { data: reqs } = await sb.from('requests').select('dj_id');
+    if (reqs) {
+      reqs.forEach(r => { requestsPerDj[r.dj_id] = (requestsPerDj[r.dj_id] || 0) + 1; });
+    }
+
+    // Charger activité récente
+    const { data: recent } = await sb.from('requests').select('*, djs(name)').order('created_at', { ascending: false }).limit(20);
+
+    renderStats(djs, reqs?.length || 0);
+    renderUsers(djs);
+    renderRecent(recent || []);
+  }
+
+  function renderStats(djs, totalReqs) {
+    const pro = djs.filter(d => d.plan === 'pro').length;
+    const trial = djs.filter(d => d.plan === 'trial').length;
+    const expired = djs.filter(d => d.plan === 'expired').length;
+    const stripe = djs.filter(d => d.stripe_connect_id).length;
+
+    document.getElementById('totalUsers').textContent = djs.length;
+    document.getElementById('totalPro').textContent = pro;
+    document.getElementById('totalTrial').textContent = trial;
+    document.getElementById('totalExpired').textContent = expired;
+    document.getElementById('totalStripe').textContent = stripe;
+    document.getElementById('totalRequests').textContent = totalReqs;
+
+    // Revenus estimés (tous les pro = mensuel 9,90€ par défaut)
+    const monthlyRev = pro * 9.90;
+    const annualRev = monthlyRev * 12;
+    document.getElementById('revMonthly').textContent = monthlyRev.toFixed(0) + '€';
+    document.getElementById('revAnnual').textContent = annualRev.toFixed(0) + '€';
+    document.getElementById('revTips').textContent = '—';
+  }
+
+  function setFilter(filter, btn) {
+    currentFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderUsers(allUsers);
+  }
+
+  function filterUsers(query) {
+    const q = query.toLowerCase();
+    const filtered = allUsers.filter(u =>
+      u.name?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q) || u.slug?.toLowerCase().includes(q)
+    );
+    renderUsersFiltered(filtered);
+  }
+
+  function renderUsers(djs) {
+    let filtered = djs;
+    if (currentFilter === 'pro') filtered = djs.filter(d => d.plan === 'pro');
+    else if (currentFilter === 'trial') filtered = djs.filter(d => d.plan === 'trial');
+    else if (currentFilter === 'expired') filtered = djs.filter(d => d.plan === 'expired');
+    else if (currentFilter === 'no-stripe') filtered = djs.filter(d => !d.stripe_connect_id);
+    renderUsersFiltered(filtered);
+  }
+
+  function renderUsersFiltered(djs) {
+    document.getElementById('userCount').textContent = djs.length + ' utilisateur(s)';
+    const tbody = document.getElementById('usersTable');
+    if (!djs.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">Aucun utilisateur</td></tr>';
+      return;
+    }
+    tbody.innerHTML = djs.map(u => {
+      const planBadge = u.plan === 'pro'
+        ? '<span class="badge badge-pro">PRO</span>'
+        : u.plan === 'trial'
+        ? '<span class="badge badge-trial">TRIAL</span>'
+        : '<span class="badge badge-expired">EXPIRÉ</span>';
+
+      const stripeBadge = u.stripe_connect_id
+        ? '<span class="badge badge-stripe">✓ Connecté</span>'
+        : '<span class="badge badge-no-stripe">✕ Non connecté</span>';
+
+      const trialDate = u.trial_ends_at
+        ? new Date(u.trial_ends_at).toLocaleDateString('fr')
+        : '—';
+
+      const createdDate = new Date(u.created_at).toLocaleDateString('fr');
+      const reqCount = requestsPerDj[u.id] || 0;
+
+      return `<tr>
+        <td>
+          <div style="font-weight:500;color:var(--text);">${u.name || '—'}</div>
+          <div style="font-size:11px;color:var(--muted);">${u.email}</div>
+          <div style="font-size:10px;color:#333;">${u.slug || ''}</div>
+        </td>
+        <td>${planBadge}</td>
+        <td>${stripeBadge}</td>
+        <td style="color:var(--muted);font-size:12px;">${createdDate}</td>
+        <td style="color:var(--muted);font-size:12px;">${trialDate}</td>
+        <td style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent);">${reqCount}</td>
+        <td>
+          <button class="action-btn" onclick="openModal('${u.id}','${u.name}','${u.plan}')">Modifier plan</button>
+          <button class="action-btn" onclick="impersonate('${u.slug}')">Voir page</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderRecent(reqs) {
+    document.getElementById('recentCount').textContent = reqs.length + ' dernières demandes';
+    const tbody = document.getElementById('recentTable');
+    tbody.innerHTML = reqs.map(r => `
+      <tr>
+        <td style="font-weight:500;">${r.djs?.name || '—'}</td>
+        <td>${r.customer_name || '—'}</td>
+        <td style="color:var(--muted);font-size:12px;">${(r.tracks || []).join(', ') || '—'}</td>
+        <td style="color:var(--gold);">${r.tip_amount ? r.tip_amount + ' ' + (r.tip_currency || '€') : '—'}</td>
+        <td>${r.is_priority ? '<span style="color:var(--gold);">⚡ Oui</span>' : '<span style="color:var(--muted);">Non</span>'}</td>
+        <td style="color:var(--muted);font-size:12px;">${new Date(r.created_at).toLocaleDateString('fr')}</td>
+      </tr>`).join('');
+  }
+
+  function openModal(id, name, plan) {
+    selectedUserId = id;
+    document.getElementById('modalUserInfo').textContent = name;
+    document.getElementById('modalPlanSelect').value = plan;
+    document.getElementById('modalPlan').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalPlan').classList.remove('open');
+    selectedUserId = null;
+  }
+
+  async function savePlan() {
+    if (!selectedUserId) return;
+    const plan = document.getElementById('modalPlanSelect').value;
+    const updates = { plan };
+    if (plan === 'pro') updates.trial_ends_at = null;
+    if (plan === 'trial') updates.trial_ends_at = new Date(Date.now() + 7*24*60*60*1000).toISOString();
+    if (plan === 'expired') updates.trial_ends_at = new Date().toISOString();
+
+    await sb.from('djs').update(updates).eq('id', selectedUserId);
+    closeModal();
+    loadData();
+  }
+
+  function impersonate(slug) {
+    window.open('request.html?dj=' + slug, '_blank');
+  }
+</script>
+</body>
+</html>
