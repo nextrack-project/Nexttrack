@@ -159,7 +159,7 @@
   /* ANIMATIONS */
 
   /* LANGUAGE SELECTOR */
-  .lang-wrap{position:fixed;top:12px;right:16px;z-index:300;}
+  .lang-wrap{position:relative;}
   .lang-trigger{display:flex;align-items:center;gap:6px;background:rgba(20,20,20,0.95);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:#888;transition:all 0.2s;backdrop-filter:blur(8px);}
   .lang-trigger:hover{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
   .lang-trigger .arrow{font-size:9px;transition:transform 0.2s;}
@@ -248,21 +248,6 @@
     <div class="lang-option" onclick="setLang('de')" id="opt-de"><span class="o-flag">🇩🇪</span><span class="o-name">Deutsch</span><span class="o-check">✓</span></div>
     <div class="lang-option" onclick="setLang('pt')" id="opt-pt"><span class="o-flag">🇵🇹</span><span class="o-name">Português</span><span class="o-check">✓</span></div>
     <div class="lang-option" onclick="setLang('it')" id="opt-it"><span class="o-flag">🇮🇹</span><span class="o-name">Italiano</span><span class="o-check">✓</span></div>
-  </div>
-</div>
-<div class="lang-wrap" id="langWrap">
-  <div class="lang-trigger" onclick="toggleLangMenu()">
-    <span id="currentFlag">🇫🇷</span>
-    <span id="currentCode" style="font-weight:500;letter-spacing:0.05em;">FR</span>
-    <span class="arrow">▾</span>
-  </div>
-  <div class="lang-dropdown">
-    <div class="lang-option active" onclick="setLang('fr')" id="opt-fr"><span>🇫🇷</span><span>Français</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('en')" id="opt-en"><span>🇬🇧</span><span>English</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('es')" id="opt-es"><span>🇪🇸</span><span>Español</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('de')" id="opt-de"><span>🇩🇪</span><span>Deutsch</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('pt')" id="opt-pt"><span>🇵🇹</span><span>Português</span><span class="o-check">✓</span></div>
-    <div class="lang-option" onclick="setLang('it')" id="opt-it"><span>🇮🇹</span><span>Italiano</span><span class="o-check">✓</span></div>
   </div>
 </div>
 
