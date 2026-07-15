@@ -37,9 +37,44 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,0.3);border-top-color:#000;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg)}}
   footer{text-align:center;margin-top:24px;font-size:11px;color:#2a2a2a;}
+
+  /* LANGUAGE SELECTOR */
+  .lang-wrap{position:fixed;top:12px;right:16px;z-index:200;}
+  .lang-trigger{display:flex;align-items:center;gap:6px;background:rgba(20,20,20,0.95);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:#888;transition:all 0.2s;backdrop-filter:blur(8px);}
+  .lang-trigger:hover{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
+  .lang-trigger .flag{font-size:14px;}
+  .lang-trigger .code{font-weight:500;letter-spacing:0.05em;}
+  .lang-trigger .arrow{font-size:9px;transition:transform 0.2s;}
+  .lang-wrap.open .lang-trigger{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
+  .lang-wrap.open .arrow{transform:rotate(180deg);}
+  .lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#141414;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:none;}
+  .lang-wrap.open .lang-dropdown{display:block;}
+  .lang-option{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:#888;transition:background 0.15s;}
+  .lang-option:hover{background:rgba(255,255,255,0.04);color:#e8e8e8;}
+  .lang-option.active{color:#c8ff00;background:rgba(200,255,0,0.05);}
+  .lang-option .o-flag{font-size:16px;}
+  .lang-option .o-name{flex:1;}
+  .lang-option .o-check{font-size:11px;color:#c8ff00;opacity:0;}
+  .lang-option.active .o-check{opacity:1;}
 </style>
 </head>
 <body>
+
+<div class="lang-wrap" id="langWrap">
+  <div class="lang-trigger" onclick="toggleLangMenu()">
+    <span class="flag" id="currentFlag">🇫🇷</span>
+    <span class="code" id="currentCode">FR</span>
+    <span class="arrow">▾</span>
+  </div>
+  <div class="lang-dropdown">
+    <div class="lang-option active" onclick="setLang('fr')" id="opt-fr"><span class="o-flag">🇫🇷</span><span class="o-name">Français</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('en')" id="opt-en"><span class="o-flag">🇬🇧</span><span class="o-name">English</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('es')" id="opt-es"><span class="o-flag">🇪🇸</span><span class="o-name">Español</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('de')" id="opt-de"><span class="o-flag">🇩🇪</span><span class="o-name">Deutsch</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('pt')" id="opt-pt"><span class="o-flag">🇵🇹</span><span class="o-name">Português</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('it')" id="opt-it"><span class="o-flag">🇮🇹</span><span class="o-name">Italiano</span><span class="o-check">✓</span></div>
+  </div>
+</div>
 <div class="container">
   <header>
     <span class="app-name">NexT<span class="t">Track</span></span>
@@ -48,14 +83,14 @@
   </header>
 
   <div class="tabs">
-    <button class="tab-btn active" id="tabLogin">Connexion</button>
-    <button class="tab-btn" id="tabSignup">Inscription</button>
+    <button class="tab-btn active" id="tabLogin">id="authTabLogin">Connexion</button>
+    <button class="tab-btn" id="tabSignup">id="authTabSignup">Inscription</button>
   </div>
 
   <div class="card" id="loginCard">
     <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="ton@email.com" /></div>
     <div class="field"><label>Mot de passe</label><input type="password" id="loginPassword" placeholder="••••••••" /></div>
-    <button class="submit-btn" id="loginBtn">CONNEXION</button>
+    <button class="submit-btn" id="loginBtn" id="loginBtnText">CONNEXION</button>
     <div class="msg" id="loginMsg"></div>
   </div>
 
@@ -64,11 +99,11 @@
     <div class="field"><label>Nom de DJ / établissement</label><input type="text" id="signupName" placeholder="Ex : Mike Deem" /></div>
     <div class="field"><label>Email</label><input type="email" id="signupEmail" placeholder="ton@email.com" /></div>
     <div class="field"><label>Mot de passe</label><input type="password" id="signupPassword" placeholder="8 caractères minimum" /></div>
-    <button class="submit-btn" id="signupBtn">CRÉER MON COMPTE</button>
+    <button class="submit-btn" id="signupBtn" id="signupBtnText">CRÉER MON COMPTE</button>
     <div class="msg" id="signupMsg"></div>
   </div>
 
-  <footer>NexTTrack · Réservé aux professionnels<br><br><a href="tarifs.html" style="color:#444;font-size:11px;text-decoration:none;letter-spacing:0.05em;">Voir les tarifs →</a> <footer>NexTTrack · Réservé aux professionnels</footer>nbsp;·<footer>NexTTrack · Réservé aux professionnels</footer>nbsp; <a href="etablissements.html" style="color:#444;font-size:11px;text-decoration:none;letter-spacing:0.05em;">Vous êtes un établissement ?</a></footer>
+  <footer><span id="authFooter">NexTTrack · Réservé aux professionnels</span><br><br><a href="tarifs.html" style="color:#444;font-size:11px;text-decoration:none;letter-spacing:0.05em;" id="tarifLink">Voir les tarifs →</a> <footer>NexTTrack · Réservé aux professionnels</footer>nbsp;·<footer>NexTTrack · Réservé aux professionnels</footer>nbsp; <a href="etablissements.html" style="color:#444;font-size:11px;text-decoration:none;letter-spacing:0.05em;">Vous êtes un établissement ?</a></footer>
 </div>
 
 <script src="supabase.min.js"></script>
@@ -143,6 +178,109 @@
   sb.auth.getSession().then(({ data }) => {
     if (data.session) window.location.href = 'nextrack-dashboard.html';
   });
+</script>
+
+<script>
+const LANG_FLAGS = {fr:'🇫🇷',en:'🇬🇧',es:'🇪🇸',de:'🇩🇪',pt:'🇵🇹',it:'🇮🇹'};
+const LANG_NAMES = {fr:'FR',en:'EN',es:'ES',de:'DE',pt:'PT',it:'IT'};
+
+function toggleLangMenu() {
+  document.getElementById('langWrap').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.lang-wrap')) {
+    const w = document.getElementById('langWrap');
+    if(w) w.classList.remove('open');
+  }
+});
+
+const PAGE_TRANSLATIONS = {
+  landing: {
+    fr: { hero1:'FINI LES', hero2:'INTERRUPTIONS', herosub:'NexTTrack permet à ton public de demander des sons et laisser des tips — sans jamais t'interrompre pendant que tu mixtes.', cta1:'COMMENCER GRATUITEMENT', cta2:'VOIR COMMENT ÇA MARCHE', trial:'7 jours gratuits — aucune carte bancaire requise', howTitle:'En place en 5 minutes', step1t:'Tu crées ton compte', step1d:'2 minutes. Nom de scène, email.', step2t:'Tu poses ton QR code', step2d:'Généré automatiquement. Imprime, pose sur la table.', step3t:'Le public scanne', step3d:'Prénom, titre, tip optionnel. 30 secondes.', step4t:'Tu vois tout en direct', step4d:'Dashboard temps réel. Priorités automatiques.', djTitle:'Pour les DJs', djDesc:'Tu mixtes, tu ne veux pas être interrompu.', djCta:'COMMENCER — 9,90€/MOIS', estabTitle:'Pour les établissements', estabDesc:'Bars, clubs — une expérience musicale interactive.', estabCta:'DÉCOUVRIR — 29,90€/MOIS', finalTitle:'Prêt à mixer sans interruptions ?', finalSub:'Rejoins les DJs qui ont transformé leurs soirées.' },
+    en: { hero1:'NO MORE', hero2:'INTERRUPTIONS', herosub:'NexTTrack lets your audience request songs and tip you — without ever interrupting your set.', cta1:'START FOR FREE', cta2:'SEE HOW IT WORKS', trial:'7 days free — no credit card required', howTitle:'Up and running in 5 minutes', step1t:'Create your account', step1d:'2 minutes. Stage name, email.', step2t:'Place your QR code', step2d:'Auto-generated. Print it, put it on the decks.', step3t:'The crowd scans', step3d:'Name, track, optional tip. 30 seconds.', step4t:'See everything live', step4d:'Real-time dashboard. Automatic priorities.', djTitle:'For DJs', djDesc:'You mix, you never want to be interrupted.', djCta:'START — €9.90/MONTH', estabTitle:'For venues', estabDesc:'Bars, clubs — an interactive music experience.', estabCta:'DISCOVER — €29.90/MONTH', finalTitle:'Ready to mix without interruptions?', finalSub:'Join the DJs who transformed their nights.' },
+    es: { hero1:'SIN MÁS', hero2:'INTERRUPCIONES', herosub:'NexTTrack permite a tu público pedir canciones y dejarte propinas — sin interrumpirte nunca.', cta1:'EMPEZAR GRATIS', cta2:'VER CÓMO FUNCIONA', trial:'7 días gratis — sin tarjeta', howTitle:'Listo en 5 minutos', step1t:'Crea tu cuenta', step1d:'2 minutos. Nombre artístico, email.', step2t:'Coloca tu código QR', step2d:'Generado automáticamente. Imprímelo.', step3t:'El público escanea', step3d:'Nombre, canción, propina opcional. 30 segundos.', step4t:'Ves todo en directo', step4d:'Dashboard en tiempo real. Prioridades automáticas.', djTitle:'Para DJs', djDesc:'Mezclas sin interrupciones.', djCta:'EMPEZAR — 9,90€/MES', estabTitle:'Para locales', estabDesc:'Bares, clubs — una experiencia musical interactiva.', estabCta:'DESCUBRIR — 29,90€/MES', finalTitle:'Listo para mezclar sin interrupciones?', finalSub:'Únete a los DJs que transformaron sus noches.' },
+    de: { hero1:'KEINE', hero2:'UNTERBRECHUNGEN', herosub:'NexTTrack lässt dein Publikum Songs anfragen und Trinkgeld geben — ohne dich zu unterbrechen.', cta1:'KOSTENLOS STARTEN', cta2:'SO FUNKTIONIERT ES', trial:'7 Tage kostenlos — keine Kreditkarte', howTitle:'In 5 Minuten einsatzbereit', step1t:'Konto erstellen', step1d:'2 Minuten. Künstlername, E-Mail.', step2t:'QR-Code aufstellen', step2d:'Automatisch generiert. Ausdrucken und aufstellen.', step3t:'Das Publikum scannt', step3d:'Name, Song, optionales Trinkgeld. 30 Sekunden.', step4t:'Alles live sehen', step4d:'Echtzeit-Dashboard. Automatische Prioritäten.', djTitle:'Für DJs', djDesc:'Du mixt, ohne unterbrochen zu werden.', djCta:'STARTEN — 9,90€/MONAT', estabTitle:'Für Venues', estabDesc:'Bars, Clubs — ein interaktives Musikerlebnis.', estabCta:'ENTDECKEN — 29,90€/MONAT', finalTitle:'Bereit ohne Unterbrechungen zu mixen?', finalSub:'Schliess dich den DJs an die ihre Abende transformiert haben.' },
+    pt: { hero1:'SEM MAIS', hero2:'INTERRUPÇÕES', herosub:'NexTTrack permite ao teu público pedir músicas e deixar gorjetas — sem te interromper.', cta1:'COMEÇAR GRÁTIS', cta2:'VER COMO FUNCIONA', trial:'7 dias grátis — sem cartão', howTitle:'Pronto em 5 minutos', step1t:'Cria a tua conta', step1d:'2 minutos. Nome artístico, email.', step2t:'Coloca o teu QR code', step2d:'Gerado automaticamente. Imprime e coloca.', step3t:'O público escaneia', step3d:'Nome, música, gorjeta opcional. 30 segundos.', step4t:'Vê tudo ao vivo', step4d:'Dashboard em tempo real. Prioridades automáticas.', djTitle:'Para DJs', djDesc:'Mis sem ser interrompido.', djCta:'COMEÇAR — 9,90€/MÊS', estabTitle:'Para estabelecimentos', estabDesc:'Bares, clubes — uma experiência musical interativa.', estabCta:'DESCOBRIR — 29,90€/MÊS', finalTitle:'Pronto para mixar sem interrupções?', finalSub:'Junta-te aos DJs que transformaram as suas noites.' },
+    it: { hero1:'NIENTE PIÙ', hero2:'INTERRUZIONI', herosub:'NexTTrack permette al tuo pubblico di richiedere canzoni e lasciare mance — senza mai interromperti.', cta1:'INIZIA GRATIS', cta2:'COME FUNZIONA', trial:'7 giorni gratis — nessuna carta', howTitle:'Operativo in 5 minuti', step1t:'Crea il tuo account', step1d:'2 minuti. Nome d'arte, email.', step2t:'Posiziona il tuo QR code', step2d:'Generato automaticamente. Stampalo e posizionalo.', step3t:'Il pubblico scansiona', step3d:'Nome, brano, mancia opzionale. 30 secondi.', step4t:'Vedi tutto in diretta', step4d:'Dashboard in tempo reale. Priorità automatiche.', djTitle:'Per i DJ', djDesc:'Mixa senza essere interrotto.', djCta:'INIZIA — 9,90€/MESE', estabTitle:'Per i locali', estabDesc:'Bar, club — un'esperienza musicale interattiva.', estabCta:'SCOPRI — 29,90€/MESE', finalTitle:'Pronto a mixare senza interruzioni?', finalSub:'Unisciti ai DJ che hanno trasformato le loro serate.' }
+  },
+  auth: {
+    fr: { title:'Connexion', signup:'Inscription', loginBtn:'CONNEXION', signupBtn:'CRÉER MON COMPTE', emailLabel:'Email', passLabel:'Mot de passe', nameLabel:'Nom de DJ / établissement', trialInfo:'7 jours gratuits — aucune carte requise. Ensuite 9,90€/mois.', footer:'Réservé aux professionnels', tarifLink:'Voir les tarifs →' },
+    en: { title:'Login', signup:'Sign up', loginBtn:'LOGIN', signupBtn:'CREATE MY ACCOUNT', emailLabel:'Email', passLabel:'Password', nameLabel:'DJ / venue name', trialInfo:'7 days free — no card required. Then €9.90/month.', footer:'For professionals only', tarifLink:'See pricing →' },
+    es: { title:'Iniciar sesión', signup:'Registrarse', loginBtn:'ENTRAR', signupBtn:'CREAR MI CUENTA', emailLabel:'Email', passLabel:'Contraseña', nameLabel:'Nombre de DJ / local', trialInfo:'7 días gratis — sin tarjeta. Luego 9,90€/mes.', footer:'Solo para profesionales', tarifLink:'Ver precios →' },
+    de: { title:'Anmelden', signup:'Registrieren', loginBtn:'ANMELDEN', signupBtn:'KONTO ERSTELLEN', emailLabel:'E-Mail', passLabel:'Passwort', nameLabel:'DJ / Venue Name', trialInfo:'7 Tage kostenlos — keine Karte. Dann 9,90€/Monat.', footer:'Nur für Profis', tarifLink:'Preise ansehen →' },
+    pt: { title:'Entrar', signup:'Registar', loginBtn:'ENTRAR', signupBtn:'CRIAR CONTA', emailLabel:'Email', passLabel:'Palavra-passe', nameLabel:'Nome de DJ / estabelecimento', trialInfo:'7 dias grátis — sem cartão. Depois 9,90€/mês.', footer:'Apenas para profissionais', tarifLink:'Ver preços →' },
+    it: { title:'Accedi', signup:'Registrati', loginBtn:'ACCEDI', signupBtn:'CREA IL MIO ACCOUNT', emailLabel:'Email', passLabel:'Password', nameLabel:'Nome DJ / locale', trialInfo:'7 giorni gratis — nessuna carta. Poi 9,90€/mese.', footer:'Solo per professionisti', tarifLink:'Vedi i prezzi →' }
+  }
+};
+
+function setLang(lang) {
+  localStorage.setItem('nt_lang', lang);
+  const flag = document.getElementById('currentFlag');
+  const code = document.getElementById('currentCode');
+  if(flag) flag.textContent = LANG_FLAGS[lang] || '';
+  if(code) code.textContent = LANG_NAMES[lang] || lang.toUpperCase();
+  document.querySelectorAll('.lang-option').forEach(o => {
+    o.classList.toggle('active', o.id === 'opt-' + lang);
+  });
+  document.getElementById('langWrap').classList.remove('open');
+  // Apply translations based on page type
+  if(typeof applyPageLang === 'function') applyPageLang(lang);
+}
+
+function detectLang() {
+  const saved = localStorage.getItem('nt_lang');
+  const browser = navigator.language?.slice(0,2).toLowerCase();
+  const map = {fr:'fr',en:'en',es:'es',de:'de',pt:'pt',it:'it'};
+  const lang = (saved && PAGE_TRANSLATIONS.landing?.[saved]) ? saved : (map[browser] || 'en');
+  setLang(lang);
+}
+</script>
+<script>
+function applyPageLang(lang) {
+  const t = PAGE_TRANSLATIONS.auth[lang] || PAGE_TRANSLATIONS.auth.en;
+  const s = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  s('authTabLogin', t.title);
+  s('authTabSignup', t.signup);
+  s('authFooter', 'NexTTrack · ' + t.footer);
+  s('tarifLink', t.tarifLink);
+}
+detectLang();
+</script>
+<script>
+const LANG_FLAGS_G = {fr:"🇫🇷",en:"🇬🇧",es:"🇪🇸",de:"🇩🇪",pt:"🇵🇹",it:"🇮🇹"};
+const LANG_CODES_G = {fr:"FR",en:"EN",es:"ES",de:"DE",pt:"PT",it:"IT"};
+
+function setLang(lang) {
+  localStorage.setItem("nt_lang", lang);
+  const flag = document.getElementById("currentFlag");
+  const code = document.getElementById("currentCode");
+  if(flag) flag.textContent = LANG_FLAGS_G[lang] || "";
+  if(code) code.textContent = LANG_CODES_G[lang] || lang.toUpperCase();
+  const dd = document.getElementById("langDropdown");
+  if(dd) dd.style.display = "none";
+  const arr = document.getElementById("langArrow");
+  if(arr) arr.textContent = "▾";
+  document.querySelectorAll("[id^='opt-']").forEach(o => {
+    o.style.color = o.id === "opt-" + lang ? "#c8ff00" : "#888";
+  });
+  if(typeof applyPageLang === "function") applyPageLang(lang);
+}
+
+document.addEventListener("click", () => {
+  const dd = document.getElementById("langDropdown");
+  if(dd) dd.style.display = "none";
+  const arr = document.getElementById("langArrow");
+  if(arr) arr.textContent = "▾";
+});
+
+// Détection auto
+(function(){
+  const saved = localStorage.getItem("nt_lang");
+  const browser = (navigator.language || "fr").slice(0,2).toLowerCase();
+  const map = {fr:"fr",en:"en",es:"es",de:"de",pt:"pt",it:"it"};
+  const lang = (saved && LANG_FLAGS_G[saved]) ? saved : (map[browser] || "en");
+  setLang(lang);
+})();
 </script>
 </body>
 </html>

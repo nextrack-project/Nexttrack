@@ -136,6 +136,21 @@
     <a href="tarifs.html" class="nav-link">Tarifs DJs</a>
     <a href="nextrack-auth.html" class="nav-cta">ESSAI GRATUIT</a>
   </div>
+  <div id="langWrap" style="position:relative;display:inline-block;">
+    <div onclick="(function(e){e.stopPropagation();var dd=document.getElementById('langDropdown');var arr=document.getElementById('langArrow');if(!dd)return;var open=dd.style.display==='block';dd.style.display=open?'none':'block';arr.textContent=open?'▾':'▴';})(event)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:#888;">
+    <span id="currentFlag">🇫🇷</span>
+    <span id="currentCode" style="font-weight:500;letter-spacing:0.05em;">FR</span>
+    <span style="font-size:8px;margin-left:2px;" id="langArrow">▾</span>
+    </div>
+    <div id="langDropdown" style="position:absolute;top:calc(100% + 8px);right:0;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;min-width:155px;box-shadow:0 12px 32px rgba(0,0,0,0.8);z-index:9999;display:none;">
+    <div onclick="setLang('fr')" id="opt-fr" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#c8ff00;border-bottom:1px solid rgba(255,255,255,0.04);">🇫🇷 Français ✓</div>
+    <div onclick="setLang('en')" id="opt-en" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇬🇧 English</div>
+    <div onclick="setLang('es')" id="opt-es" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇪🇸 Español</div>
+    <div onclick="setLang('de')" id="opt-de" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇩🇪 Deutsch</div>
+    <div onclick="setLang('pt')" id="opt-pt" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;border-bottom:1px solid rgba(255,255,255,0.04);">🇵🇹 Português</div>
+    <div onclick="setLang('it')" id="opt-it" style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;">🇮🇹 Italiano</div>
+    </div>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -404,5 +419,41 @@ async function startCheckout(priceId) {
 }
 </script>
 
+<script>
+const LANG_FLAGS_G = {fr:"🇫🇷",en:"🇬🇧",es:"🇪🇸",de:"🇩🇪",pt:"🇵🇹",it:"🇮🇹"};
+const LANG_CODES_G = {fr:"FR",en:"EN",es:"ES",de:"DE",pt:"PT",it:"IT"};
+
+function setLang(lang) {
+  localStorage.setItem("nt_lang", lang);
+  const flag = document.getElementById("currentFlag");
+  const code = document.getElementById("currentCode");
+  if(flag) flag.textContent = LANG_FLAGS_G[lang] || "";
+  if(code) code.textContent = LANG_CODES_G[lang] || lang.toUpperCase();
+  const dd = document.getElementById("langDropdown");
+  if(dd) dd.style.display = "none";
+  const arr = document.getElementById("langArrow");
+  if(arr) arr.textContent = "▾";
+  document.querySelectorAll("[id^='opt-']").forEach(o => {
+    o.style.color = o.id === "opt-" + lang ? "#c8ff00" : "#888";
+  });
+  if(typeof applyPageLang === "function") applyPageLang(lang);
+}
+
+document.addEventListener("click", () => {
+  const dd = document.getElementById("langDropdown");
+  if(dd) dd.style.display = "none";
+  const arr = document.getElementById("langArrow");
+  if(arr) arr.textContent = "▾";
+});
+
+// Détection auto
+(function(){
+  const saved = localStorage.getItem("nt_lang");
+  const browser = (navigator.language || "fr").slice(0,2).toLowerCase();
+  const map = {fr:"fr",en:"en",es:"es",de:"de",pt:"pt",it:"it"};
+  const lang = (saved && LANG_FLAGS_G[saved]) ? saved : (map[browser] || "en");
+  setLang(lang);
+})();
+</script>
 </body>
 </html>
