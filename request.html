@@ -143,6 +143,26 @@
   footer .ft-name{color:rgba(200,255,0,0.2);}
 
 
+
+  /* LANGUAGE SELECTOR */
+  .lang-wrap{position:fixed;top:12px;right:16px;z-index:200;}
+  .lang-trigger{display:flex;align-items:center;gap:6px;background:rgba(20,20,20,0.95);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:12px;color:#888;transition:all 0.2s;backdrop-filter:blur(8px);}
+  .lang-trigger:hover{border-color:rgba(200,255,0,0.3);color:var(--accent);}
+  .lang-trigger .flag{font-size:14px;}
+  .lang-trigger .code{font-weight:500;letter-spacing:0.05em;}
+  .lang-trigger .arrow{font-size:9px;transition:transform 0.2s;}
+  .lang-wrap.open .lang-trigger{border-color:rgba(200,255,0,0.3);color:var(--accent);}
+  .lang-wrap.open .arrow{transform:rotate(180deg);}
+  .lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#141414;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:none;}
+  .lang-wrap.open .lang-dropdown{display:block;}
+  .lang-option{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-family:"DM Sans",sans-serif;font-size:13px;color:#888;transition:background 0.15s;}
+  .lang-option:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+  .lang-option.active{color:var(--accent);background:rgba(200,255,0,0.05);}
+  .lang-option .o-flag{font-size:16px;}
+  .lang-option .o-name{flex:1;}
+  .lang-option .o-check{font-size:11px;color:var(--accent);opacity:0;}
+  .lang-option.active .o-check{opacity:1;}
+  body{padding-top:0;}
   /* SPOTIFY SEARCH */
   .track-wrap{position:relative;flex:1;}
   .spotify-results{position:absolute;top:100%;left:0;right:0;background:#1a1a1a;border:1px solid rgba(200,255,0,0.2);border-radius:10px;z-index:100;overflow:hidden;display:none;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.6);}
@@ -168,6 +188,23 @@
 <body>
 
 <!-- Loading -->
+
+<div class="lang-wrap" id="langWrap">
+  <div class="lang-trigger" onclick="toggleLangMenu()">
+    <span class="flag" id="currentFlag">🇫🇷</span>
+    <span class="code" id="currentCode">FR</span>
+    <span class="arrow">▾</span>
+  </div>
+  <div class="lang-dropdown">
+    <div class="lang-option active" onclick="setLang('fr')" id="opt-fr"><span class="o-flag">🇫🇷</span><span class="o-name">Français</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('en')" id="opt-en"><span class="o-flag">🇬🇧</span><span class="o-name">English</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('es')" id="opt-es"><span class="o-flag">🇪🇸</span><span class="o-name">Español</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('de')" id="opt-de"><span class="o-flag">🇩🇪</span><span class="o-name">Deutsch</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('pt')" id="opt-pt"><span class="o-flag">🇵🇹</span><span class="o-name">Português</span><span class="o-check">✓</span></div>
+    <div class="lang-option" onclick="setLang('it')" id="opt-it"><span class="o-flag">🇮🇹</span><span class="o-name">Italiano</span><span class="o-check">✓</span></div>
+  </div>
+</div>
+
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-logo">NexTTrack</div>
   <div class="loading-spinner"></div>
@@ -186,8 +223,8 @@
     <header>
       <span class="app-name">NexT<span class="t">Track</span></span>
       <h1 id="djName">MIKE<br>DEEM</h1>
-      <span class="dj-by">Song Request · <span>En live</span></span>
-      <p class="subtitle">Pose ta demande — je la vois entre deux tracks</p>
+      <span class="dj-by">Song Request · <span id="djTagline">En live</span></span>
+      <p class="subtitle" id="djSubtitle">Pose ta demande — je la vois entre deux tracks</p>
     </header>
 
     <div class="divider"></div>
@@ -195,73 +232,48 @@
     <div id="formWrapper">
 
       <div class="card">
-        <div class="card-title"><span class="num">1</span> Ton prénom</div>
-        <label for="name">Prénom</label>
+        <div class="card-title"><span class="num">1</span> <span id="step1Title">Ton prénom</span></div>
+        <label for="name" id="step1Label">Prénom</label>
         <input type="text" id="name" placeholder="Ex : Sarah" autocomplete="off" />
         <div class="error-msg" id="nameError">Dis-moi ton prénom ✌️</div>
       </div>
 
       <div class="card">
-        <div class="card-title"><span class="num">2</span> Tes idées de sons</div>
-        <label>Jusqu'à 5 titres <span class="optional-tag">(artiste — titre si possible)</span></label>
+        <div class="card-title"><span class="num">2</span> <span id="step2Title">Tes idées de sons</span></div>
+        <label><span id="step2Label">Jusqu'à 5 titres</span> <span class="optional-tag" id="step2Sub">(artiste — titre si possible)</span></label>
         <div class="tracks-grid">
-          <div class="track-row"><span class="track-num">1</span>
-            <div class="track-wrap">
-              <input type="text" id="t1" placeholder="Ex : Drake — God's Plan" autocomplete="off" oninput="spotifySearch(this,1)" onfocus="showResults(1)" />
-              <div class="spotify-results" id="sr1"></div>
-            </div>
-          </div>
-          <div class="track-row"><span class="track-num">2</span>
-            <div class="track-wrap">
-              <input type="text" id="t2" placeholder="Ex : Beyoncé — Cuff It" autocomplete="off" oninput="spotifySearch(this,2)" onfocus="showResults(2)" />
-              <div class="spotify-results" id="sr2"></div>
-            </div>
-          </div>
-          <div class="track-row"><span class="track-num">3</span>
-            <div class="track-wrap">
-              <input type="text" id="t3" placeholder="Optionnel" autocomplete="off" oninput="spotifySearch(this,3)" onfocus="showResults(3)" />
-              <div class="spotify-results" id="sr3"></div>
-            </div>
-          </div>
-          <div class="track-row"><span class="track-num">4</span>
-            <div class="track-wrap">
-              <input type="text" id="t4" placeholder="Optionnel" autocomplete="off" oninput="spotifySearch(this,4)" onfocus="showResults(4)" />
-              <div class="spotify-results" id="sr4"></div>
-            </div>
-          </div>
-          <div class="track-row"><span class="track-num">5</span>
-            <div class="track-wrap">
-              <input type="text" id="t5" placeholder="Optionnel" autocomplete="off" oninput="spotifySearch(this,5)" onfocus="showResults(5)" />
-              <div class="spotify-results" id="sr5"></div>
-            </div>
-          </div>
+          <div class="track-row"><span class="track-num">1</span><input type="text" id="t1" placeholder="Ex : Drake — God's Plan" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">2</span><input type="text" id="t2" placeholder="Ex : Beyoncé — Cuff It" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">3</span><input type="text" id="t3" placeholder="Optionnel" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">4</span><input type="text" id="t4" placeholder="Optionnel" autocomplete="off" /></div>
+          <div class="track-row"><span class="track-num">5</span><input type="text" id="t5" placeholder="Optionnel" autocomplete="off" /></div>
         </div>
         <div class="error-msg" id="tracksError">Mets au moins un titre 🎵</div>
       </div>
 
       <div class="card tip-card">
-        <div class="card-title"><span class="num">3</span> Laisser un tip <span class="optional-tag" style="color:#555;font-size:11px;">— optionnel</span></div>
-        <p class="tip-intro">Tu kiffes la set ? Un tip ça fait plaisir — et ça peut accélérer le passage de ta demande 👀</p>
+        <div class="card-title"><span class="num">3</span> <span id="step3Title">Laisser un tip</span> <span class="optional-tag" style="color:#555;font-size:11px;" id="step3Sub">— optionnel</span></div>
+        <p class="tip-intro" id="tipIntro">Tu kiffes la set ? Un tip ça fait plaisir — et ça peut accélérer le passage de ta demande 👀</p>
 
         <div class="tip-tiers">
           <div class="tier-btn" data-amount="5" onclick="selectTier(this)">
             <span class="tier-amount">5€/CHF</span>
-            <span class="tier-label">Sympa</span>
-            <span class="tier-badge">Quand je peux</span>
+            <span class="tier-label" id="tier1Label">Sympa</span>
+            <span class="tier-badge" id="tier1Badge">Quand je peux</span>
           </div>
           <div class="tier-btn" data-amount="10" onclick="selectTier(this)">
             <span class="tier-amount">10€/CHF</span>
-            <span class="tier-label">Généreux</span>
-            <span class="tier-badge">Ça arrive vite</span>
+            <span class="tier-label" id="tier2Label">Généreux</span>
+            <span class="tier-badge" id="tier2Badge">Ça arrive vite</span>
           </div>
           <div class="tier-btn vip" data-amount="20" onclick="selectTier(this)">
             <span class="tier-amount">20€/CHF+</span>
-            <span class="tier-label">VIP</span>
-            <span class="tier-badge">⚡ Priorité</span>
+            <span class="tier-label" id="tier3Label">VIP</span>
+            <span class="tier-badge" id="tier3Badge">⚡ Priorité</span>
           </div>
         </div>
 
-        <div class="or-divider"><span>ou montant libre</span></div>
+        <div class="or-divider"><span id="freeDivider">ou montant libre</span></div>
         <div class="free-amount-wrap">
           <div class="free-input-row">
             <span class="euro-prefix">€/CHF</span>
@@ -271,21 +283,21 @@
 
         <div class="priority-banner" id="priorityBanner">
           <span class="icon">⚡</span>
-          <p><strong>Priorité activée.</strong> Ta demande remonte en tête de liste.</p>
+          <p><strong id="priorityTitle">Priorité activée.</strong> <span id="priorityDesc">Ta demande remonte en tête de liste.</span></p>
         </div>
 
         <div class="pay-section" id="paySection">
-          <span class="currency-label">Choisir ta devise</span>
+          <span class="currency-label" id="currencyLabel">Choisir ta devise</span>
           <div class="currency-toggle">
             <button class="currency-btn" id="btnEUR" onclick="selectCurrency('EUR')">
               <span class="currency-flag">🇪🇺</span>
               <span class="currency-name">Euro</span>
-              <span class="currency-sub">Carte · Apple Pay · PayPal</span>
+              <span class="currency-sub" id="eurSub">Carte · Apple Pay · PayPal</span>
             </button>
             <button class="currency-btn" id="btnCHF" onclick="selectCurrency('CHF')">
               <span class="currency-flag">🇨🇭</span>
               <span class="currency-name">Franc suisse</span>
-              <span class="currency-sub">Twint · Carte · Apple Pay</span>
+              <span class="currency-sub" id="chfSub">Twint · Carte · Apple Pay</span>
             </button>
           </div>
           <div id="payBtnWrap" style="display:none;flex-direction:column;gap:10px;">
@@ -317,7 +329,7 @@
       <p class="success-sub" id="successSub"></p>
     </div>
 
-    <footer><span class="ft-name">NexTTrack</span> · SONG REQUEST SYSTEM<div class="legal-links"><a href="mentions-legales.html">Mentions légales</a><a href="politique-confidentialite.html">Confidentialité</a><a href="cgu.html">CGU</a></div></footer>
+    <footer><span class="ft-name">NexTTrack</span> · <span id="footerText">SONG REQUEST SYSTEM</span><div class="legal-links"><a href="mentions-legales.html">Mentions légales</a><a href="politique-confidentialite.html">Confidentialité</a><a href="cgu.html">CGU</a></div></footer>
   </div>
 </div>
 
@@ -562,6 +574,348 @@
   }
 
 
+
+  // ── TRANSLATIONS ──
+  const LANGS = {
+    fr: {
+      appTagline: 'Song Request · En live',
+      subtitle: 'Pose ta demande — je la vois entre deux tracks',
+      step1: 'Ton prénom',
+      step1Label: 'Prénom',
+      step1Ph: 'Ex : Sarah',
+      step1Err: 'Dis-moi ton prénom ✌️',
+      step2: 'Tes idées de sons',
+      step2Label: "Jusqu'à 5 titres",
+      step2Sub: '(artiste — titre si possible)',
+      step2Ph1: "Ex : Drake — God's Plan",
+      step2Ph2: 'Ex : Beyoncé — Cuff It',
+      step2PhOpt: 'Optionnel',
+      step2Err: 'Mets au moins un titre 🎵',
+      step2Search: 'Recherche un titre...',
+      step3: 'Laisser un tip',
+      step3Sub: '— optionnel',
+      tipIntro: "Tu kiffes la set ? Un tip ça fait plaisir — et ça peut accélérer le passage de ta demande 👀",
+      tier1Label: 'Sympa', tier1Badge: 'Quand je peux',
+      tier2Label: 'Généreux', tier2Badge: 'Ça arrive vite',
+      tier3Label: 'VIP', tier3Badge: '⚡ Priorité',
+      freeLabel: 'ou montant libre',
+      priorityTitle: 'Priorité activée.',
+      priorityDesc: 'Ta demande remonte en tête de liste — le DJ la voit en premier.',
+      currencyLabel: 'Choisir ta devise',
+      eurSub: 'Carte · Apple Pay · PayPal',
+      chfSub: 'Twint · Carte · Apple Pay',
+      noTip: 'Finalement, sans tip →',
+      paidOk: 'Tip envoyé, merci !',
+      paidDesc: 'Tu peux maintenant envoyer ta demande.',
+      warnMsg: "T'as sélectionné un tip mais tu n'as pas encore payé. Paie d'abord ou clique sur "Finalement, sans tip" pour continuer.",
+      submitBtn: 'ENVOYER MA DEMANDE',
+      submitPrio: '⚡ ENVOYER — PRIORITÉ',
+      successTitle: "C'est reçu !",
+      successTitlePrio: 'PRIORITÉ !',
+      successSub: 'Ta demande est transmise. Il fait son possible pour la passer — profite ! 🔊',
+      successSubPrio: 'Ta demande remonte en tête de liste. Le DJ la voit en premier — ça va envoyer 🔥',
+      djNotFound: 'DJ introuvable',
+      djNotFoundSub: 'Ce lien ne correspond à aucun DJ. Vérifie le QR code et réessaie.',
+      footer: 'SONG REQUEST SYSTEM',
+    },
+    en: {
+      appTagline: 'Song Request · Live',
+      subtitle: 'Drop your request — I see it between tracks',
+      step1: 'Your name',
+      step1Label: 'First name',
+      step1Ph: 'E.g. Sarah',
+      step1Err: 'Tell me your name ✌️',
+      step2: 'Your song ideas',
+      step2Label: 'Up to 5 tracks',
+      step2Sub: '(artist — title if possible)',
+      step2Ph1: "E.g. Drake — God's Plan",
+      step2Ph2: 'E.g. Beyoncé — Cuff It',
+      step2PhOpt: 'Optional',
+      step2Err: 'Add at least one track 🎵',
+      step2Search: 'Search a track...',
+      step3: 'Leave a tip',
+      step3Sub: '— optional',
+      tipIntro: 'Loving the set? A tip goes a long way — and can speed up your request 👀',
+      tier1Label: 'Nice', tier1Badge: 'When I can',
+      tier2Label: 'Generous', tier2Badge: 'Coming soon',
+      tier3Label: 'VIP', tier3Badge: '⚡ Priority',
+      freeLabel: 'or custom amount',
+      priorityTitle: 'Priority activated.',
+      priorityDesc: 'Your request moves to the top — the DJ sees it first.',
+      currencyLabel: 'Choose your currency',
+      eurSub: 'Card · Apple Pay · PayPal',
+      chfSub: 'Twint · Card · Apple Pay',
+      noTip: 'Actually, no tip →',
+      paidOk: 'Tip sent, thank you!',
+      paidDesc: 'You can now submit your request.',
+      warnMsg: 'You selected a tip but haven't paid yet. Pay first or click "No tip" to continue.',
+      submitBtn: 'SEND MY REQUEST',
+      submitPrio: '⚡ SEND — PRIORITY',
+      successTitle: "Received!",
+      successTitlePrio: 'PRIORITY!',
+      successSub: 'Your request is on its way. The DJ will do his best — enjoy! 🔊',
+      successSubPrio: 'Your request is at the top. The DJ sees it first — it's coming 🔥',
+      djNotFound: 'DJ not found',
+      djNotFoundSub: 'This link does not match any DJ. Check the QR code and try again.',
+      footer: 'SONG REQUEST SYSTEM',
+    },
+    es: {
+      appTagline: 'Solicitud de canciones · En vivo',
+      subtitle: 'Haz tu pedido — lo veo entre pistas',
+      step1: 'Tu nombre',
+      step1Label: 'Nombre',
+      step1Ph: 'Ej: Sarah',
+      step1Err: 'Dime tu nombre ✌️',
+      step2: 'Tus canciones',
+      step2Label: 'Hasta 5 canciones',
+      step2Sub: '(artista — título si es posible)',
+      step2Ph1: "Ej: Drake — God's Plan",
+      step2Ph2: 'Ej: Beyoncé — Cuff It',
+      step2PhOpt: 'Opcional',
+      step2Err: 'Añade al menos una canción 🎵',
+      step2Search: 'Busca una canción...',
+      step3: 'Dejar propina',
+      step3Sub: '— opcional',
+      tipIntro: '¿Te está gustando el set? Una propina siempre se agradece — y puede acelerar tu pedido 👀',
+      tier1Label: 'Simpático', tier1Badge: 'Cuando pueda',
+      tier2Label: 'Generoso', tier2Badge: 'Llega pronto',
+      tier3Label: 'VIP', tier3Badge: '⚡ Prioridad',
+      freeLabel: 'o cantidad libre',
+      priorityTitle: 'Prioridad activada.',
+      priorityDesc: 'Tu pedido sube al principio — el DJ lo ve primero.',
+      currencyLabel: 'Elige tu moneda',
+      eurSub: 'Tarjeta · Apple Pay · PayPal',
+      chfSub: 'Twint · Tarjeta · Apple Pay',
+      noTip: 'Sin propina →',
+      paidOk: '¡Propina enviada, gracias!',
+      paidDesc: 'Ya puedes enviar tu solicitud.',
+      warnMsg: 'Has seleccionado una propina pero no has pagado aún. Paga primero o haz clic en "Sin propina" para continuar.',
+      submitBtn: 'ENVIAR MI SOLICITUD',
+      submitPrio: '⚡ ENVIAR — PRIORIDAD',
+      successTitle: '¡Recibido!',
+      successTitlePrio: '¡PRIORIDAD!',
+      successSub: 'Tu solicitud está en camino. ¡El DJ hará lo posible — disfruta! 🔊',
+      successSubPrio: 'Tu solicitud está en primer lugar. El DJ la ve primero 🔥',
+      djNotFound: 'DJ no encontrado',
+      djNotFoundSub: 'Este enlace no corresponde a ningún DJ. Verifica el código QR.',
+      footer: 'SONG REQUEST SYSTEM',
+    },
+    de: {
+      appTagline: 'Song Request · Live',
+      subtitle: 'Deine Anfrage — ich sehe sie zwischen den Tracks',
+      step1: 'Dein Name',
+      step1Label: 'Vorname',
+      step1Ph: 'Z.B. Sarah',
+      step1Err: 'Sag mir deinen Namen ✌️',
+      step2: 'Deine Songwünsche',
+      step2Label: 'Bis zu 5 Songs',
+      step2Sub: '(Künstler — Titel wenn möglich)',
+      step2Ph1: "Z.B. Drake — God's Plan",
+      step2Ph2: 'Z.B. Beyoncé — Cuff It',
+      step2PhOpt: 'Optional',
+      step2Err: 'Füge mindestens einen Song hinzu 🎵',
+      step2Search: 'Song suchen...',
+      step3: 'Trinkgeld geben',
+      step3Sub: '— optional',
+      tipIntro: 'Gefällt dir das Set? Ein Trinkgeld wird geschätzt — und kann deine Anfrage beschleunigen 👀',
+      tier1Label: 'Nett', tier1Badge: 'Wenn möglich',
+      tier2Label: 'Großzügig', tier2Badge: 'Kommt bald',
+      tier3Label: 'VIP', tier3Badge: '⚡ Priorität',
+      freeLabel: 'oder eigener Betrag',
+      priorityTitle: 'Priorität aktiviert.',
+      priorityDesc: 'Deine Anfrage kommt nach oben — der DJ sieht sie zuerst.',
+      currencyLabel: 'Währung wählen',
+      eurSub: 'Karte · Apple Pay · PayPal',
+      chfSub: 'Twint · Karte · Apple Pay',
+      noTip: 'Doch kein Trinkgeld →',
+      paidOk: 'Trinkgeld gesendet, danke!',
+      paidDesc: 'Du kannst jetzt deine Anfrage senden.',
+      warnMsg: 'Du hast ein Trinkgeld ausgewählt aber noch nicht bezahlt. Zahle zuerst oder klicke auf "Kein Trinkgeld".',
+      submitBtn: 'ANFRAGE SENDEN',
+      submitPrio: '⚡ SENDEN — PRIORITÄT',
+      successTitle: 'Erhalten!',
+      successTitlePrio: 'PRIORITÄT!',
+      successSub: 'Deine Anfrage ist unterwegs. Viel Spaß! 🔊',
+      successSubPrio: 'Deine Anfrage ist ganz oben. Der DJ sieht sie zuerst 🔥',
+      djNotFound: 'DJ nicht gefunden',
+      djNotFoundSub: 'Dieser Link entspricht keinem DJ. Überprüfe den QR-Code.',
+      footer: 'SONG REQUEST SYSTEM',
+    },
+    pt: {
+      appTagline: 'Pedido de música · Ao vivo',
+      subtitle: 'Faz o teu pedido — eu vejo entre as faixas',
+      step1: 'O teu nome',
+      step1Label: 'Nome',
+      step1Ph: 'Ex: Sarah',
+      step1Err: 'Diz-me o teu nome ✌️',
+      step2: 'As tuas músicas',
+      step2Label: 'Até 5 músicas',
+      step2Sub: '(artista — título se possível)',
+      step2Ph1: "Ex: Drake — God's Plan",
+      step2Ph2: 'Ex: Beyoncé — Cuff It',
+      step2PhOpt: 'Opcional',
+      step2Err: 'Adiciona pelo menos uma música 🎵',
+      step2Search: 'Pesquisar uma música...',
+      step3: 'Deixar gorjeta',
+      step3Sub: '— opcional',
+      tipIntro: 'Estás a gostar do set? Uma gorjeta é sempre bem-vinda — e pode acelerar o teu pedido 👀',
+      tier1Label: 'Simpático', tier1Badge: 'Quando puder',
+      tier2Label: 'Generoso', tier2Badge: 'Chega em breve',
+      tier3Label: 'VIP', tier3Badge: '⚡ Prioridade',
+      freeLabel: 'ou valor livre',
+      priorityTitle: 'Prioridade ativada.',
+      priorityDesc: 'O teu pedido sobe ao topo — o DJ vê-o primeiro.',
+      currencyLabel: 'Escolhe a tua moeda',
+      eurSub: 'Cartão · Apple Pay · PayPal',
+      chfSub: 'Twint · Cartão · Apple Pay',
+      noTip: 'Sem gorjeta →',
+      paidOk: 'Gorjeta enviada, obrigado!',
+      paidDesc: 'Já podes enviar o teu pedido.',
+      warnMsg: 'Selecionaste uma gorjeta mas ainda não pagaste. Paga primeiro ou clica em "Sem gorjeta".',
+      submitBtn: 'ENVIAR O MEU PEDIDO',
+      submitPrio: '⚡ ENVIAR — PRIORIDADE',
+      successTitle: 'Recebido!',
+      successTitlePrio: 'PRIORIDADE!',
+      successSub: 'O teu pedido está a caminho. Aproveita! 🔊',
+      successSubPrio: 'O teu pedido está no topo. O DJ vê-o primeiro 🔥',
+      djNotFound: 'DJ não encontrado',
+      djNotFoundSub: 'Este link não corresponde a nenhum DJ. Verifica o código QR.',
+      footer: 'SONG REQUEST SYSTEM',
+    },
+    it: {
+      appTagline: 'Richiesta canzone · Live',
+      subtitle: 'Fai la tua richiesta — la vedo tra un brano e l'altro',
+      step1: 'Il tuo nome',
+      step1Label: 'Nome',
+      step1Ph: 'Es: Sarah',
+      step1Err: 'Dimmi il tuo nome ✌️',
+      step2: 'Le tue canzoni',
+      step2Label: 'Fino a 5 brani',
+      step2Sub: '(artista — titolo se possibile)',
+      step2Ph1: "Es: Drake — God's Plan",
+      step2Ph2: 'Es: Beyoncé — Cuff It',
+      step2PhOpt: 'Opzionale',
+      step2Err: 'Aggiungi almeno un brano 🎵',
+      step2Search: 'Cerca un brano...',
+      step3: 'Lascia una mancia',
+      step3Sub: '— opzionale',
+      tipIntro: 'Ti sta piacendo il set? Una mancia è sempre apprezzata — e può accelerare la tua richiesta 👀',
+      tier1Label: 'Gentile', tier1Badge: 'Quando possibile',
+      tier2Label: 'Generoso', tier2Badge: 'Arriva presto',
+      tier3Label: 'VIP', tier3Badge: '⚡ Priorità',
+      freeLabel: 'o importo libero',
+      priorityTitle: 'Priorità attivata.',
+      priorityDesc: 'La tua richiesta sale in cima — il DJ la vede per prima.',
+      currencyLabel: 'Scegli la valuta',
+      eurSub: 'Carta · Apple Pay · PayPal',
+      chfSub: 'Twint · Carta · Apple Pay',
+      noTip: 'Senza mancia →',
+      paidOk: 'Mancia inviata, grazie!',
+      paidDesc: 'Ora puoi inviare la tua richiesta.',
+      warnMsg: 'Hai selezionato una mancia ma non hai ancora pagato. Paga prima o clicca su "Senza mancia".',
+      submitBtn: 'INVIA LA MIA RICHIESTA',
+      submitPrio: '⚡ INVIA — PRIORITÀ',
+      successTitle: 'Ricevuto!',
+      successTitlePrio: 'PRIORITÀ!',
+      successSub: 'La tua richiesta è in arrivo. Divertiti! 🔊',
+      successSubPrio: 'La tua richiesta è in cima. Il DJ la vede per prima 🔥',
+      djNotFound: 'DJ non trovato',
+      djNotFoundSub: 'Questo link non corrisponde a nessun DJ. Verifica il codice QR.',
+      footer: 'SONG REQUEST SYSTEM',
+    }
+  };
+
+  let currentLang = 'fr';
+
+  function toggleLangMenu() {
+    document.getElementById('langWrap').classList.toggle('open');
+  }
+
+  // Ferme le menu si clic ailleurs
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.lang-wrap')) {
+      document.getElementById('langWrap').classList.remove('open');
+    }
+  });
+
+  const LANG_FLAGS = {fr:'🇫🇷',en:'🇬🇧',es:'🇪🇸',de:'🇩🇪',pt:'🇵🇹',it:'🇮🇹'};
+  const LANG_NAMES = {fr:'FR',en:'EN',es:'ES',de:'DE',pt:'PT',it:'IT'};
+
+  function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('nt_lang', lang);
+    // Update trigger
+    const flag = document.getElementById('currentFlag');
+    const code = document.getElementById('currentCode');
+    if(flag) flag.textContent = LANG_FLAGS[lang] || '';
+    if(code) code.textContent = LANG_NAMES[lang] || lang.toUpperCase();
+    // Update options
+    document.querySelectorAll('.lang-option').forEach(o => {
+      o.classList.toggle('active', o.id === 'opt-' + lang);
+    });
+    // Ferme le menu
+    document.getElementById('langWrap').classList.remove('open');
+    applyLang(lang);
+  }
+
+  function applyLang(lang) {
+    const t = LANGS[lang] || LANGS.fr;
+    const safe = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };
+    const safePh = (id, ph) => { const el = document.getElementById(id); if(el) el.placeholder = ph; };
+
+    // Nav
+    safe('djTagline', t.appTagline);
+    safe('djSubtitle', t.subtitle);
+
+    // Step 1
+    safe('step1Title', t.step1);
+    safe('step1Label', t.step1Label);
+    safePh('name', t.step1Ph);
+    safe('nameError', t.step1Err);
+
+    // Step 2
+    safe('step2Title', t.step2);
+    safe('step2Label', t.step2Label);
+    safe('step2Sub', t.step2Sub);
+    safePh('t1', lang === 'fr' ? t.step2Ph1 : t.step2Search);
+    safePh('t2', lang === 'fr' ? t.step2Ph2 : t.step2Search);
+    ['t3','t4','t5'].forEach(id => safePh(id, t.step2PhOpt));
+    safe('tracksError', t.step2Err);
+
+    // Step 3
+    safe('step3Title', t.step3);
+    safe('step3Sub', t.step3Sub);
+    safe('tipIntro', t.tipIntro);
+    safe('tier1Label', t.tier1Label); safe('tier1Badge', t.tier1Badge);
+    safe('tier2Label', t.tier2Label); safe('tier2Badge', t.tier2Badge);
+    safe('tier3Label', t.tier3Label); safe('tier3Badge', t.tier3Badge);
+    safe('freeDivider', t.freeLabel);
+    safe('priorityTitle', t.priorityTitle);
+    safe('priorityDesc', t.priorityDesc);
+    safe('currencyLabel', t.currencyLabel);
+    safe('eurSub', t.eurSub);
+    safe('chfSub', t.chfSub);
+
+    // Submit
+    const submitBtn = document.getElementById('submitBtn');
+    if(submitBtn && !submitBtn.classList.contains('priority-mode')) {
+      submitBtn.textContent = t.submitBtn;
+    }
+
+    // Footer
+    safe('footerText', t.footer);
+  }
+
+  // Détecte la langue du navigateur au chargement
+  function detectLang() {
+    const saved = localStorage.getItem('nt_lang');
+    if(saved && LANGS[saved]) { setLang(saved); return; }
+    const browser = navigator.language?.slice(0,2).toLowerCase();
+    const map = { fr:'fr', en:'en', es:'es', de:'de', pt:'pt', it:'it' };
+    setLang(map[browser] || 'en');
+  }
+
+
   // ── SPOTIFY SEARCH ──
   const SPOTIFY_FN = 'https://auotqmoflcjigqetxcfm.supabase.co/functions/v1/spotify-search';
   let spotifyTimers = {};
@@ -639,6 +993,7 @@
     }
   });
   init();
+  detectLang();
 </script>
 </body>
 </html>
