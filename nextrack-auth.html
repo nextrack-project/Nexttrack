@@ -85,6 +85,15 @@
     <div class="msg" id="signupMsg"></div>
   </div>
 
+  <div id="forgotScreen" style="display:none;text-align:center;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;margin-bottom:8px;">Réinitialiser le mot de passe</div>
+    <p style="font-size:13px;color:#666;margin-bottom:16px;">Entre ton email — tu recevras un lien de réinitialisation.</p>
+    <input type="email" id="forgotEmail" class="auth-input" placeholder="ton@email.com" style="margin-bottom:12px;" />
+    <button onclick="sendReset()" class="auth-btn" style="margin-bottom:10px;">ENVOYER LE LIEN</button>
+    <div id="forgotMsg" style="font-size:12px;margin-top:8px;"></div>
+    <span onclick="showLogin()" style="font-size:12px;color:#444;cursor:pointer;text-decoration:underline;margin-top:12px;display:block;">← Retour à la connexion</span>
+  </div>
+
   <footer><span id="authFooter">NexTTrack · Réservé aux professionnels</span><br><br><a href="tarifs.html" style="color:#444;font-size:11px;text-decoration:none;letter-spacing:0.05em;" id="tarifLink">Voir les tarifs →</a> <footer>NexTTrack · Réservé aux professionnels</footer>nbsp;·nbsp; <a href="etablissements.html" style="color:#444;font-size:11px;text-decoration:none;letter-spacing:0.05em;">Vous êtes un établissement ?</a></footer>
 </div>
 
@@ -263,6 +272,65 @@ document.addEventListener("click", () => {
   const lang = (saved && LANG_FLAGS_G[saved]) ? saved : (map[browser] || "en");
   setLang(lang);
 })();
+
+  function showForgotPassword() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('forgotScreen').style.display = 'block';
+  }
+
+  function showLogin() {
+    document.getElementById('forgotScreen').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+  }
+
+  async function sendReset() {
+    const email = document.getElementById('forgotEmail').value.trim();
+    const msg = document.getElementById('forgotMsg');
+    if (!email) { msg.textContent = 'Entre ton email'; msg.style.color = '#ff6b6b'; return; }
+    
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://nextrack-project.github.io/Nexttrack/nextrack-auth.html?reset=true'
+    });
+    
+    if (error) {
+      msg.textContent = 'Erreur : ' + error.message;
+      msg.style.color = '#ff6b6b';
+    } else {
+      msg.textContent = '✅ Email envoyé ! Vérifie ta boîte mail.';
+      msg.style.color = '#c8ff00';
+    }
+  }
+
+  // Détecte si c'est un retour de reset password
+  if (new URLSearchParams(window.location.search).get('reset') === 'true') {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'none';
+    const resetDiv = document.createElement('div');
+    resetDiv.style.cssText = 'text-align:center;';
+    resetDiv.innerHTML = `
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#fff;margin-bottom:8px;">Nouveau mot de passe</div>
+      <input type="password" id="newPassword" class="auth-input" placeholder="Nouveau mot de passe" style="margin-bottom:12px;" />
+      <button onclick="updatePassword()" class="auth-btn">METTRE À JOUR</button>
+      <div id="resetMsg" style="font-size:12px;margin-top:8px;"></div>
+    `;
+    document.querySelector('.auth-card').appendChild(resetDiv);
+  }
+
+  async function updatePassword() {
+    const pwd = document.getElementById('newPassword').value;
+    const msg = document.getElementById('resetMsg');
+    if (pwd.length < 8) { msg.textContent = 'Minimum 8 caractères'; msg.style.color = '#ff6b6b'; return; }
+    const { error } = await sb.auth.updateUser({ password: pwd });
+    if (error) {
+      msg.textContent = 'Erreur : ' + error.message;
+      msg.style.color = '#ff6b6b';
+    } else {
+      msg.textContent = '✅ Mot de passe mis à jour !';
+      msg.style.color = '#c8ff00';
+      setTimeout(() => window.location.href = 'nextrack-dashboard.html', 1500);
+    }
+  }
 </script>
 </body>
 </html>
