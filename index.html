@@ -225,7 +225,7 @@
     <a href="#pour-qui" class="nav-link">Pour qui</a>
     <a href="#tarifs" class="nav-link">Tarifs</a>
     <div class="lang-wrap" id="langWrap" style="position:relative;">
-      <div class="lang-trigger" onclick="toggleLangMenu(event)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:#888;">
+      <div class="lang-trigger" onclick="(function(e){e.stopPropagation();var dd=document.getElementById('langDropdown');var arr=document.getElementById('langArrow');if(!dd)return;var open=dd.style.display==='block';dd.style.display=open?'none':'block';arr.textContent=open?'▾':'▴';})(event)" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:#888;">
         <span id="currentFlag">🇫🇷</span>
         <span id="currentCode" style="font-weight:500;letter-spacing:0.05em;">FR</span>
         <span style="font-size:8px;margin-left:2px;" id="langArrow">▾</span>
