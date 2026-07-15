@@ -276,18 +276,18 @@ document.addEventListener("click", () => {
   setLang(lang);
 })();
 
-  function showForgotPassword() {
+function showForgotPassword() {
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('signupForm').style.display = 'none';
     document.getElementById('forgotScreen').style.display = 'block';
   }
 
-  function showLogin() {
+function showLogin() {
     document.getElementById('forgotScreen').style.display = 'none';
     document.getElementById('loginForm').style.display = 'block';
   }
 
-  async function sendReset() {
+async function sendReset() {
     const email = document.getElementById('forgotEmail').value.trim();
     const msg = document.getElementById('forgotMsg');
     if (!email) { msg.textContent = 'Entre ton email'; msg.style.color = '#ff6b6b'; return; }
@@ -306,7 +306,7 @@ document.addEventListener("click", () => {
   }
 
   // Détecte si c'est un retour de reset password
-  if (new URLSearchParams(window.location.search).get('reset') === 'true') {
+if (new URLSearchParams(window.location.search).get('reset') === 'true') {
     document.getElementById('loginForm').style.display = 'none';
     document.getElementById('signupForm').style.display = 'none';
     const resetDiv = document.createElement('div');
@@ -320,7 +320,7 @@ document.addEventListener("click", () => {
     document.querySelector('.auth-card').appendChild(resetDiv);
   }
 
-  async function updatePassword() {
+async function updatePassword() {
     const pwd = document.getElementById('newPassword').value;
     const msg = document.getElementById('resetMsg');
     if (pwd.length < 8) { msg.textContent = 'Minimum 8 caractères'; msg.style.color = '#ff6b6b'; return; }
