@@ -159,18 +159,18 @@
   /* ANIMATIONS */
 
   /* LANGUAGE SELECTOR */
-  .lang-wrap{position:relative;}
-  .lang-trigger{display:flex;align-items:center;gap:6px;background:rgba(20,20,20,0.95);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:#888;transition:all 0.2s;backdrop-filter:blur(8px);}
-  .lang-trigger:hover{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
-  .lang-trigger .arrow{font-size:9px;transition:transform 0.2s;}
-  .lang-wrap.open .lang-trigger{border-color:rgba(200,255,0,0.3);color:#c8ff00;}
+  .lang-wrap{position:relative;display:inline-block;}
+  .lang-trigger{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;color:#888;transition:all 0.2s;user-select:none;}
+  .lang-trigger:hover,.lang-wrap.open .lang-trigger{border-color:rgba(200,255,0,0.4);color:#c8ff00;}
+  .lang-trigger .arrow{font-size:8px;transition:transform 0.2s;margin-left:2px;}
   .lang-wrap.open .arrow{transform:rotate(180deg);}
-  .lang-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:#141414;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,0.6);display:none;}
-  .lang-wrap.open .lang-dropdown{display:block;}
-  .lang-option{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;color:#888;transition:background 0.15s;}
-  .lang-option:hover{background:rgba(255,255,255,0.04);color:#e8e8e8;}
-  .lang-option.active{color:#c8ff00;background:rgba(200,255,0,0.05);}
-  .lang-option .o-check{font-size:11px;color:#c8ff00;opacity:0;margin-left:auto;}
+  .lang-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#1a1a1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;overflow:hidden;min-width:155px;box-shadow:0 12px 32px rgba(0,0,0,0.8);z-index:999;display:none;}
+  .lang-wrap.open .lang-dropdown{display:block !important;}
+  .lang-option{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13px;color:#888;transition:background 0.15s;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .lang-option:last-child{border-bottom:none;}
+  .lang-option:hover{background:rgba(255,255,255,0.05);color:#e8e8e8;}
+  .lang-option.active{color:#c8ff00;}
+  .lang-option .o-check{font-size:10px;color:#c8ff00;opacity:0;margin-left:auto;}
   .lang-option.active .o-check{opacity:1;}
   @keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
   @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -236,7 +236,7 @@
 
 
 <div class="lang-wrap" id="langWrap">
-  <div class="lang-trigger" onclick="toggleLangMenu()">
+  <div class="lang-trigger" onclick="toggleLangMenu(event)">
     <span class="flag" id="currentFlag">🇫🇷</span>
     <span class="code" id="currentCode">FR</span>
     <span class="arrow">▾</span>
