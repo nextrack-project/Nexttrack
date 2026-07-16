@@ -413,7 +413,7 @@
         document.body.appendChild(banner);
       }
       // QR Code
-      const appUrl = `https://nextrack-project.github.io/Nexttrack?dj=${data.slug}`;
+      const appUrl = `https://nextrack-project.github.io/Nexttrack/request.html?dj=${data.slug}`;
       document.getElementById('qrUrl').textContent = appUrl;
       document.getElementById('qrCodeDisplay').innerHTML = '';
       new QRCode(document.getElementById('qrCodeDisplay'), { text: appUrl, width: 160, height: 160, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.H });
